@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Full Page Screenshot</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <div class="output-options" role="radiogroup" aria-label="After capture">
+        <label class="output-option">
+          <input type="radio" name="output" value="clipboard" checked />
+          <span>Copy</span>
+        </label>
+        <label class="output-option">
+          <input type="radio" name="output" value="download" />
+          <span>Download</span>
+        </label>
+      </div>
+
+      <div class="capture-actions">
+        <button id="capture-full-page" type="button">Capture full page</button>
+        <button id="capture-viewport" class="secondary-button" type="button">
+          Visible area only
+        </button>
+      </div>
+
+      <div class="status-row" aria-live="polite">
+        <span id="status-dot" class="status-dot"></span>
+        <span id="status">Ready</span>
+      </div>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

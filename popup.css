@@ -1,0 +1,146 @@
+:root {
+  color-scheme: light;
+  --ink: #17211b;
+  --paper: #f4f0e6;
+  --acid: #d9ff57;
+  --muted: #69736c;
+  --line: rgba(23, 33, 27, 0.16);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 260px;
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: "Avenir Next", Avenir, "Century Gothic", sans-serif;
+}
+
+main {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.output-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.output-option {
+  display: grid;
+  min-height: 30px;
+  place-items: center;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.output-option + .output-option {
+  border-left: 1px solid var(--line);
+}
+
+.output-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.output-option:has(input:checked) {
+  color: var(--ink);
+  background: var(--acid);
+}
+
+.output-option:has(input:focus-visible) {
+  outline: 2px solid #6b8f00;
+  outline-offset: -2px;
+}
+
+.capture-actions {
+  display: grid;
+  gap: 6px;
+}
+
+button {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 2px;
+  color: #fff;
+  background: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+button:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+button:focus-visible {
+  outline: 2px solid #6b8f00;
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.secondary-button {
+  border: 1px solid var(--line);
+  color: var(--ink);
+  background: transparent;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #75a300;
+}
+
+.status-dot.busy {
+  background: #d58b00;
+  animation: pulse 900ms ease-in-out infinite alternate;
+}
+
+.status-dot.error {
+  background: #c83d2f;
+}
+
+@keyframes pulse {
+  to {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-dot.busy,
+  .output-option {
+    transition: none;
+    animation: none;
+  }
+}
