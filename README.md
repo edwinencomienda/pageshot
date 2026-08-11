@@ -11,6 +11,22 @@ corners, and a shadow behind the shot.
 No build step, no dependencies, no accounts, no tracking. Just plain HTML, CSS,
 and JavaScript.
 
+## Features
+
+- **Three ways to capture** — the full page (scrolled and stitched
+  automatically), just the visible area, or a rectangle you drag over the page.
+- **Straight to your clipboard** — or into the editor, whichever you prefer.
+- **A built-in editor** — put a background behind the shot: transparent, solid
+  colors, gradients, or your own images, plus padding, squircle corners
+  (the smooth Figma/iOS kind), shadow, border, and crop.
+- **Presets** — save a look you like by name and reapply it in one click; new
+  captures start from it automatically.
+- **Multiple editors at once** — every capture opens in its own tab.
+- **Clean shots** — scrollbars are cropped out and sticky headers appear once,
+  not repeated down the page.
+- **Undo/redo and shortcuts** — ⌘C copy, ⌘D download, ⌘Z undo.
+- **Private by design** — screenshots never leave your computer.
+
 ## Install
 
 Works in any Chrome-based browser: Chrome, Edge, Brave, Arc, Vivaldi, Opera.
