@@ -90,6 +90,19 @@
           <div id="solids" class="swatches" role="radiogroup" aria-label="Solid backgrounds"></div>
           <p class="sub">Gradient</p>
           <div id="gradients" class="swatches" role="radiogroup" aria-label="Gradient backgrounds"></div>
+          <p class="sub">Pattern</p>
+          <div id="patterns" class="swatches" role="radiogroup" aria-label="Pattern backgrounds"></div>
+          <label class="slider-row" id="pattern-density-row">
+            <span>Density <output id="pattern-density-value"></output></span>
+            <input
+              id="pattern-density"
+              type="range"
+              min="50"
+              max="300"
+              step="10"
+              value="100"
+            />
+          </label>
 
           <p class="sub" id="colors-sub" hidden>My colors</p>
           <div id="colors" class="swatches" role="radiogroup" aria-label="My colors"></div>

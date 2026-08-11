@@ -17,8 +17,9 @@ and JavaScript.
   automatically), just the visible area, or a rectangle you drag over the page.
 - **Straight to your clipboard** — or into the editor, whichever you prefer.
 - **A built-in editor** — put a background behind the shot: transparent, solid
-  colors, gradients, or your own images, plus padding, squircle corners
-  (the smooth Figma/iOS kind), shadow, border, and crop.
+  colors, gradients, or your own images, with pattern overlays on top, plus
+  padding, squircle corners (the smooth Figma/iOS kind), shadow, border, and
+  crop.
 - **Presets** — save a look you like by name and reapply it in one click; new
   captures start from it automatically.
 - **Multiple editors at once** — every capture opens in its own tab.
@@ -70,6 +71,10 @@ side:
   see-through. Add your own solid colors with the picker and your own images with
   **Add image** — as many of each as you like. They stay in the sidebar for next time; hover one and click **×**
   to delete it.
+- **Pattern** — dots, grid, stripes, hatch, checker, crosses, waves, zigzag,
+  bricks, rings or triangles, drawn faintly on top of whichever background you
+  picked, in an ink that follows its brightness. A **Density** slider sets how
+  many marks fill the frame.
 - **Padding** — how much background shows around the shot.
 - **Corners** — rounds the screenshot's edges, using a squircle (the smooth
   Figma/iOS corner) rather than a plain arc.
@@ -89,7 +94,7 @@ from the **Presets** dropdown any time to apply it again.
 With a preset picked, **Save** becomes **Update** and writes your tweaks over
 it, **Save as new** keeps it and starts another, and **Delete** drops it.
 
-A preset stores the background, padding, corners, shadow and border — not the
+A preset stores the background, pattern, padding, corners, shadow and border — not the
 crop, which belongs to a single screenshot. They live in the browser, so they
 stay between captures — including which one you had picked, and each new
 screenshot starts from that preset's saved look rather than your last tweaks.
@@ -112,11 +117,11 @@ the browser's maximum image size.
 
 ## How it works
 
-`popup.js` hides the page's scrollbars, scrolls it one screen at a time, snaps
-each screen with `chrome.tabs.captureVisibleTab`, and stitches the pieces onto a
-single canvas. Chrome caps capturing at two shots per second, so tall pages take
-a few seconds. The scrollbars and the page's scroll position are restored when
-it finishes.
+`popup.js` scrolls the page one screen at a time, snaps each screen with
+`chrome.tabs.captureVisibleTab`, and stitches the pieces onto a single canvas,
+cropping scrollbars out along the way. Chrome caps capturing at two shots per
+second, so tall pages take a few seconds. The page's scroll position is
+restored when it finishes.
 
 The editor is a second extension page (`editor.html`). The captured PNG is
 handed over through IndexedDB (`store.js`) rather than the URL, because

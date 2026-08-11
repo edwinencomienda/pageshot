@@ -15,6 +15,10 @@ const presetSaveAs = document.querySelector("#preset-save-as");
 const presetDelete = document.querySelector("#preset-delete");
 const solidList = document.querySelector("#solids");
 const gradientList = document.querySelector("#gradients");
+const patternList = document.querySelector("#patterns");
+const patternDensityInput = document.querySelector("#pattern-density");
+const patternDensityValue = document.querySelector("#pattern-density-value");
+const patternDensityRow = document.querySelector("#pattern-density-row");
 const borderToggle = document.querySelector("#border");
 const borderColorInput = document.querySelector("#border-color");
 const borderColorLabel = document.querySelector("#border-color-label");
@@ -73,6 +77,32 @@ const GRADIENTS = [
   { id: "falcon", label: "Falcon", gradient: ["#a8c3d0", "#73879b"] },
 ];
 
+// Pattern overlays. Drawn on top of whichever background is picked, in an ink
+// chosen from that background's brightness, so one set works on any color.
+const PATTERNS = [
+  { id: "none", label: "None" },
+  { id: "dots", label: "Dots" },
+  { id: "grid", label: "Grid" },
+  { id: "stripes", label: "Stripes" },
+  { id: "hatch", label: "Hatch" },
+  { id: "checker", label: "Checker" },
+  { id: "crosses", label: "Crosses" },
+  { id: "waves", label: "Waves" },
+  { id: "zigzag", label: "Zigzag" },
+  { id: "bricks", label: "Bricks" },
+  { id: "rings", label: "Rings" },
+  { id: "triangles", label: "Triangles" },
+];
+
+// The swatch shows the very tile the canvas will draw, just darker and denser.
+function patternCss(id) {
+  if (id === "none")
+    return "linear-gradient(135deg, transparent 45%, rgba(200, 61, 47, 0.7) 45% 55%, transparent 55%), #f4f0e6";
+
+  const tile = patternTile(id, "rgba(23, 33, 27, 0.3)", 0.8);
+  return `url(${tile.toDataURL()}) 0 0 / ${tile.width}px ${tile.height}px repeat, #f4f0e6`;
+}
+
 // `css` mirrors the canvas fill so each swatch previews what it draws.
 const BACKGROUNDS = [...SOLIDS, ...GRADIENTS].map((background) => ({
   ...background,
@@ -94,6 +124,8 @@ const settings = {
   radius: Number(radiusInput.value),
   shadow: Number(shadowInput.value),
   crop: { ...FULL_CROP },
+  pattern: "none",
+  patternDensity: Number(patternDensityInput.value),
   border: false,
   borderColor: borderColorInput.value,
   borderWidth: Number(borderWidthInput.value),
@@ -394,6 +426,9 @@ function applyPreset(name) {
   const preset = presets.find((item) => item.name === name);
   if (!preset) return;
 
+  // Presets saved before newer settings existed leave those at their default.
+  settings.pattern = DEFAULTS.pattern;
+  settings.patternDensity = DEFAULTS.patternDensity;
   Object.assign(settings, structuredClone(preset.look));
 
   // The image behind the preset may be long gone.
@@ -470,10 +505,42 @@ function syncControls() {
   document.querySelectorAll('input[type="range"]').forEach(paintSliderFill);
   syncPresetButtons();
 
+  patternDensityInput.value = settings.patternDensity;
+  patternDensityValue.textContent = `${settings.patternDensity}%`;
+  patternDensityRow.classList.toggle("inactive", settings.pattern === "none");
+
+  document.querySelectorAll('input[name="pattern"]').forEach((input) => {
+    input.checked = input.value === settings.pattern;
+  });
+
   document.querySelectorAll('input[name="background"]').forEach((input) => {
     if (settings.mode === "image") input.checked = input.value === settings.imageId;
     else if (settings.mode === "color") input.checked = input.value === settings.color;
     else input.checked = input.value === settings.preset;
+  });
+}
+
+// Pattern overlay swatches — their own radio group, separate from the
+// background choice, because the two combine.
+function buildPatternSwatches() {
+  PATTERNS.forEach((pattern) => {
+    const label = document.createElement("label");
+    label.className = "swatch";
+    label.title = pattern.label;
+    label.style.background = patternCss(pattern.id);
+
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "pattern";
+    input.value = pattern.id;
+    input.setAttribute("aria-label", `${pattern.label} pattern`);
+    input.addEventListener("change", () => {
+      settings.pattern = pattern.id;
+      commit();
+    });
+
+    label.append(input);
+    patternList.append(label);
   });
 }
 
@@ -646,6 +713,135 @@ function squirclePath(ctx, x, y, width, height, extent) {
   ctx.closePath();
 }
 
+// Draws one repeating tile for a pattern overlay: just the ink, transparent
+// in between, so it sits on whatever background is underneath. Sized with the
+// shot so the pattern reads the same on a retina capture as on the swatch.
+function patternTile(id, ink, scale) {
+  const tile = document.createElement("canvas");
+  const ctx = tile.getContext("2d");
+  const unit = (n) => Math.max(1, Math.round(n * scale));
+
+  const begin = (width, height = width) => {
+    tile.width = width;
+    tile.height = height;
+    ctx.fillStyle = ink;
+    ctx.strokeStyle = ink;
+    return [width, height];
+  };
+
+  if (id === "dots") {
+    const [size] = begin(unit(14));
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, unit(1.5), 0, Math.PI * 2);
+    ctx.fill();
+  } else if (id === "grid") {
+    const [size] = begin(unit(14));
+    ctx.fillRect(0, 0, size, unit(1));
+    ctx.fillRect(0, 0, unit(1), size);
+  } else if (id === "stripes" || id === "hatch") {
+    // 45° stripes on the lines x + y = 0, size and 2·size — one tile apart,
+    // so the pattern meets itself at every edge. Stripes take half the
+    // perpendicular spacing as width; hatch uses thin lines both ways.
+    const [size] = begin(unit(14));
+    ctx.lineWidth = id === "stripes" ? size / Math.SQRT2 / 2 : unit(1);
+    ctx.beginPath();
+    for (const c of [0, size, size * 2]) {
+      ctx.moveTo(c - size, size);
+      ctx.lineTo(c + size, -size);
+      if (id === "hatch") {
+        // The perpendicular family, x − y constant, one tile apart too.
+        ctx.moveTo(c - size * 2, -size);
+        ctx.lineTo(c, size);
+      }
+    }
+    ctx.stroke();
+  } else if (id === "checker") {
+    const [size] = begin(unit(20));
+    ctx.fillRect(0, 0, size / 2, size / 2);
+    ctx.fillRect(size / 2, size / 2, size / 2, size / 2);
+  } else if (id === "crosses") {
+    const [size] = begin(unit(14));
+    const arm = unit(5);
+    const thick = unit(1);
+    const mid = size / 2;
+    ctx.fillRect(mid - arm / 2, mid - thick / 2, arm, thick);
+    ctx.fillRect(mid - thick / 2, mid - arm / 2, thick, arm);
+  } else if (id === "waves") {
+    const [width, height] = begin(unit(20), unit(10));
+    ctx.lineWidth = unit(1.2);
+    ctx.beginPath();
+    ctx.moveTo(0, height / 2);
+    ctx.quadraticCurveTo(width / 4, 0, width / 2, height / 2);
+    ctx.quadraticCurveTo((width * 3) / 4, height, width, height / 2);
+    ctx.stroke();
+  } else if (id === "zigzag") {
+    const [width, height] = begin(unit(14), unit(10));
+    ctx.lineWidth = unit(1.2);
+    ctx.beginPath();
+    ctx.moveTo(0, (height * 3) / 4);
+    ctx.lineTo(width / 2, height / 4);
+    ctx.lineTo(width, (height * 3) / 4);
+    ctx.stroke();
+  } else if (id === "bricks") {
+    const [width, height] = begin(unit(22), unit(14));
+    const thick = unit(1);
+    // Two courses per tile, joints offset half a brick.
+    ctx.fillRect(0, 0, width, thick);
+    ctx.fillRect(0, height / 2, width, thick);
+    ctx.fillRect(width / 2 - thick / 2, 0, thick, height / 2);
+    ctx.fillRect(0, height / 2, thick, height / 2);
+  } else if (id === "rings") {
+    const [size] = begin(unit(16));
+    ctx.lineWidth = unit(1.2);
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, unit(4), 0, Math.PI * 2);
+    ctx.stroke();
+  } else {
+    // triangles
+    const [size] = begin(unit(16));
+    const half = unit(3.5);
+    const mid = size / 2;
+    ctx.beginPath();
+    ctx.moveTo(mid, mid - half);
+    ctx.lineTo(mid + half, mid + half);
+    ctx.lineTo(mid - half, mid + half);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  return tile;
+}
+
+// The ink follows the background:// The ink follows the background: faint dark marks on a light ground, faint
+// light marks on a dark one. Images get the light ink — photographs are busy,
+// and pale marks read better over them.
+function patternInk() {
+  let base = null;
+  if (settings.mode === "color") base = settings.color;
+  else if (settings.mode === "preset") {
+    const background = currentPreset();
+    base = background.gradient ? background.gradient[0] : background.color;
+  }
+
+  if (!base) return "rgba(244, 240, 230, 0.25)";
+  return readableInk(base) === "#17211b"
+    ? "rgba(23, 33, 27, 0.14)"
+    : "rgba(244, 240, 230, 0.2)";
+}
+
+function paintPatternOverlay(width, height) {
+  if (settings.pattern === "none") return;
+
+  // Density shrinks the tile, so 200% means twice the dots per row.
+  const scale =
+    (shot ? Math.max(1, shot.width / 1200) : 1) * (100 / settings.patternDensity);
+  composedContext.fillStyle = composedContext.createPattern(
+    patternTile(settings.pattern, patternInk(), scale),
+    "repeat",
+  );
+  composedContext.fillRect(0, 0, width, height);
+}
+
 function paintBackground(width, height) {
   const image = settings.mode === "image" ? selectedImage()?.bitmap : null;
 
@@ -661,29 +857,33 @@ function paintBackground(width, height) {
       drawWidth,
       drawHeight,
     );
+    paintPatternOverlay(width, height);
     return;
   }
 
   if (settings.mode === "color") {
     composedContext.fillStyle = settings.color;
     composedContext.fillRect(0, 0, width, height);
+    paintPatternOverlay(width, height);
     return;
   }
 
   const background = currentPreset();
 
-  // Nothing to paint — the cleared canvas is the transparent background.
-  if (background.transparent) return;
-
-  if (background.gradient) {
-    const gradient = composedContext.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, background.gradient[0]);
-    gradient.addColorStop(1, background.gradient[1]);
-    composedContext.fillStyle = gradient;
-  } else {
-    composedContext.fillStyle = background.color;
+  if (!background.transparent) {
+    // A transparent background paints nothing — the cleared canvas is it.
+    if (background.gradient) {
+      const gradient = composedContext.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, background.gradient[0]);
+      gradient.addColorStop(1, background.gradient[1]);
+      composedContext.fillStyle = gradient;
+    } else {
+      composedContext.fillStyle = background.color;
+    }
+    composedContext.fillRect(0, 0, width, height);
   }
-  composedContext.fillRect(0, 0, width, height);
+
+  paintPatternOverlay(width, height);
 }
 
 function render() {
@@ -918,6 +1118,7 @@ function wireSlider(input, key) {
 }
 
 wireSlider(paddingInput, "padding");
+wireSlider(patternDensityInput, "patternDensity");
 wireSlider(radiusInput, "radius");
 wireSlider(shadowInput, "shadow");
 
@@ -1013,6 +1214,7 @@ async function load() {
   labelShortcuts();
   buildSwatches(BACKGROUNDS.filter((item) => !item.gradient), solidList);
   buildSwatches(BACKGROUNDS.filter((item) => item.gradient), gradientList);
+  buildPatternSwatches();
 
   const saved = await shotStore.loadBackgrounds().catch(() => []);
   for (const record of saved) {
@@ -1053,6 +1255,8 @@ async function load() {
 
     const preset = presets.find((item) => item.name === presetPicker.value);
     if (preset) {
+      settings.pattern = DEFAULTS.pattern;
+      settings.patternDensity = DEFAULTS.patternDensity;
       Object.assign(settings, structuredClone(preset.look));
       if (settings.mode === "image" && !selectedImage()) settings.mode = "preset";
     }

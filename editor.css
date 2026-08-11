@@ -359,6 +359,12 @@ legend + .sub {
   text-transform: uppercase;
 }
 
+/* Dimmed while no pattern is picked. */
+.slider-row.inactive {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 /* Dimmed until the border is switched on. */
 fieldset:has(#border:not(:checked)) .custom-row,
 fieldset:has(#border:not(:checked)) .slider-row {
