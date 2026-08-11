@@ -65,6 +65,63 @@ main {
   outline-offset: -2px;
 }
 
+/* Dimmed while the editor handles the output instead. */
+.output-options.inactive {
+  opacity: 0.45;
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.switch-track {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: rgba(23, 33, 27, 0.08);
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.switch-track::after {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ink);
+  content: "";
+  transition: transform 160ms ease;
+}
+
+.switch:has(input:checked) .switch-track {
+  border-color: var(--ink);
+  background: var(--acid);
+}
+
+.switch:has(input:checked) .switch-track::after {
+  transform: translateX(14px);
+}
+
+.switch:has(input:focus-visible) .switch-track {
+  outline: 2px solid #6b8f00;
+  outline-offset: 2px;
+}
+
 .capture-actions {
   display: grid;
   gap: 6px;
@@ -139,7 +196,9 @@ button:disabled {
 
 @media (prefers-reduced-motion: reduce) {
   .status-dot.busy,
-  .output-option {
+  .output-option,
+  .switch-track,
+  .switch-track::after {
     transition: none;
     animation: none;
   }

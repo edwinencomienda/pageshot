@@ -3,7 +3,11 @@
 A tiny, open-source Chrome extension that screenshots a whole webpage — or just
 the part you can see — and copies it to your clipboard or saves it as a PNG.
 
-No build step, no dependencies, no accounts, no tracking. Just three files.
+It also has a small editor page for putting a background, padding, rounded
+corners, and a shadow behind the shot.
+
+No build step, no dependencies, no accounts, no tracking. Just plain HTML, CSS,
+and JavaScript.
 
 ## Install
 
@@ -31,6 +35,36 @@ To update later: `git pull`, then click the refresh icon on the extension card.
 For a full-page capture, leave the page and popup open while it scrolls. The
 status line at the bottom tells you when it's done.
 
+### Add a background
+
+Flip on **Open in editor** in the popup before capturing. Instead of copying or
+downloading right away, the screenshot opens in a new tab where you can put a
+background behind it:
+
+- **Background** — five presets, any custom color you pick, or your own image.
+  The color and image are remembered for next time, and the **×** next to each
+  removes it.
+- **Padding** — how much background shows around the shot.
+- **Corners** — rounds the screenshot's edges.
+- **Shadow** — slide from off to strong.
+- **Crop** — drag a box on the image to keep just that part, background and all,
+  so you can save only the top, the top-left corner, and so on. **Show whole
+  image** puts it back.
+
+Then hit **Copy image** or **Download** from the editor.
+
+### Shortcuts
+
+On Windows and Linux, use **Ctrl** instead of **⌘** — the editor shows whichever
+one your computer uses.
+
+| Keys | Does |
+| --- | --- |
+| **⌘C** | Copy the image |
+| **⌘D** | Download the image |
+| **⌘Z** | Undo |
+| **⇧⌘Z** | Redo |
+
 **Good to know:** Chrome blocks screenshots of its own pages, like
 `chrome://extensions` and the Chrome Web Store. Extremely tall pages may exceed
 the browser's maximum image size.
@@ -41,6 +75,18 @@ the browser's maximum image size.
 `chrome.tabs.captureVisibleTab`, and stitches the pieces onto a single canvas.
 Chrome caps capturing at two shots per second, so tall pages take a few seconds.
 The page's scroll position is restored when it finishes.
+
+The editor is a second extension page (`editor.html`). The captured PNG is
+handed over through IndexedDB (`store.js`) rather than the URL, because
+full-page PNGs are far too big for either a URL or `chrome.storage`. The editor
+redraws the background and screenshot onto its own canvas.
+
+| File | Job |
+| --- | --- |
+| `popup.html` / `.css` / `.js` | The toolbar popup and the capture + stitch logic. |
+| `editor.html` / `.css` / `.js` | The background editor tab. |
+| `store.js` | Passes the captured PNG from popup to editor. |
+| `manifest.json` | Extension setup and permissions. |
 
 ## Permissions, and why each is needed
 
@@ -57,7 +103,7 @@ Your screenshots never leave your computer.
 
 Issues and pull requests are welcome. To hack on it:
 
-1. Edit the files — `popup.html`, `popup.css`, `popup.js`.
+1. Edit the files — see the table above.
 2. Click the refresh icon on the extension card at `chrome://extensions`.
 3. Reopen the popup to see your change. Right-click the popup → **Inspect** for
    the console.

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dress up screenshot</title>
+    <link rel="stylesheet" href="editor.css" />
+  </head>
+  <body>
+    <header>
+      <span class="viewfinder" aria-hidden="true"></span>
+      <h1>Dress it <em>up.</em></h1>
+      <div class="history">
+        <button id="undo" type="button" aria-label="Undo">↺</button>
+        <button id="redo" type="button" aria-label="Redo">↻</button>
+      </div>
+      <span id="dimensions" class="dimensions"></span>
+    </header>
+
+    <main>
+      <section class="stage">
+        <div id="empty" class="empty" hidden>
+          <p>No screenshot waiting.</p>
+          <p class="empty-hint">
+            Click the extension icon, pick <strong>Open in editor</strong>, then
+            capture.
+          </p>
+        </div>
+        <div id="frame" class="frame">
+          <canvas id="canvas"></canvas>
+          <div id="marquee" class="marquee" hidden></div>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <fieldset>
+          <legend>Background</legend>
+          <div id="backgrounds" class="swatches" role="radiogroup" aria-label="Background"></div>
+
+          <div class="custom-row">
+            <label class="custom-color">
+              <input id="color" type="color" value="#1d3b2a" />
+              <span id="color-label">Custom color</span>
+            </label>
+            <button id="color-remove" class="remove" type="button" title="Remove custom color" hidden>
+              ×
+            </button>
+          </div>
+
+          <div class="custom-row">
+            <label class="upload">
+              <input id="upload" type="file" accept="image/*" />
+              <span id="upload-label">Use my own image</span>
+            </label>
+            <button id="upload-remove" class="remove" type="button" title="Remove image" hidden>
+              ×
+            </button>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Padding <output id="padding-value"></output></legend>
+          <input id="padding" type="range" min="0" max="14" step="0.5" value="5" />
+        </fieldset>
+
+        <fieldset>
+          <legend>Corners <output id="radius-value"></output></legend>
+          <input id="radius" type="range" min="0" max="48" step="1" value="14" />
+        </fieldset>
+
+        <fieldset>
+          <legend>Shadow <output id="shadow-value"></output></legend>
+          <input id="shadow" type="range" min="0" max="100" step="5" value="45" />
+        </fieldset>
+
+        <fieldset>
+          <legend>Crop <output id="crop-value"></output></legend>
+          <p class="hint">Drag on the image to keep just that part.</p>
+          <button id="crop-reset" class="secondary-button" type="button" disabled>
+            Show whole image
+          </button>
+        </fieldset>
+
+        <div class="actions">
+          <button id="copy" type="button">
+            Copy image <kbd data-key="C"></kbd>
+          </button>
+          <button id="download" class="secondary-button" type="button">
+            Download <kbd data-key="D"></kbd>
+          </button>
+        </div>
+
+        <p id="status" class="status" aria-live="polite">Ready</p>
+      </aside>
+    </main>
+
+    <script src="store.js"></script>
+    <script src="editor.js"></script>
+  </body>
+</html>

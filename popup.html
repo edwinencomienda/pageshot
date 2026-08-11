@@ -8,7 +8,7 @@
   </head>
   <body>
     <main>
-      <div class="output-options" role="radiogroup" aria-label="After capture">
+      <div id="output-options" class="output-options" role="radiogroup" aria-label="After capture">
         <label class="output-option">
           <input type="radio" name="output" value="clipboard" checked />
           <span>Copy</span>
@@ -18,6 +18,12 @@
           <span>Download</span>
         </label>
       </div>
+
+      <label class="switch">
+        <span class="switch-label">Open in editor</span>
+        <input id="use-editor" type="checkbox" role="switch" />
+        <span class="switch-track" aria-hidden="true"></span>
+      </label>
 
       <div class="capture-actions">
         <button id="capture-full-page" type="button">Capture full page</button>
@@ -32,6 +38,7 @@
       </div>
     </main>
 
+    <script src="store.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

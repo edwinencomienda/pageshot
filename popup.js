@@ -4,12 +4,25 @@ const viewportButton = document.querySelector("#capture-viewport");
 const statusText = document.querySelector("#status");
 const statusDot = document.querySelector("#status-dot");
 const outputInputs = [...document.querySelectorAll('input[name="output"]')];
+const outputOptions = document.querySelector("#output-options");
+const editorToggle = document.querySelector("#use-editor");
 const savedOutput = localStorage.getItem("screenshot-output");
 
 if (savedOutput) {
   const savedInput = outputInputs.find((input) => input.value === savedOutput);
   if (savedInput) savedInput.checked = true;
 }
+
+editorToggle.checked = localStorage.getItem("screenshot-editor") === "on";
+
+function syncEditorToggle() {
+  outputOptions.classList.toggle("inactive", editorToggle.checked);
+  outputInputs.forEach((input) => {
+    input.disabled = editorToggle.checked;
+  });
+}
+
+syncEditorToggle();
 
 const wait = (milliseconds) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -96,7 +109,37 @@ async function copyPng(blob) {
   ]);
 }
 
+async function openInEditor(blob, tab, captureType) {
+  setStatus("Opening editor");
+  await shotStore.save(blob, {
+    filename: safeFilename(tab.url, captureType),
+    id: `${Date.now()}`,
+  });
+
+  // Reuse one editor tab so an older capture is never left sitting in another.
+  const url = chrome.runtime.getURL("editor.html");
+  const knownTabId = Number(localStorage.getItem("editor-tab-id"));
+
+  if (knownTabId) {
+    try {
+      // Setting the url reloads the tab, so it picks up the new capture.
+      await chrome.tabs.update(knownTabId, { url, active: true });
+      return;
+    } catch {
+      // The tab was closed since last time; fall through and open a new one.
+    }
+  }
+
+  const editorTab = await chrome.tabs.create({ url });
+  localStorage.setItem("editor-tab-id", String(editorTab.id));
+}
+
 async function saveOutput(blob, tab, captureType) {
+  if (editorToggle.checked) {
+    await openInEditor(blob, tab, captureType);
+    return;
+  }
+
   const output = outputInputs.find((input) => input.checked)?.value ?? "clipboard";
   setStatus(output === "clipboard" ? "Copying image" : "Preparing download");
   if (output === "clipboard") {
@@ -199,8 +242,12 @@ async function handleCapture(captureType) {
     } else {
       await captureViewport(activeTab);
     }
-    const output = outputInputs.find((input) => input.checked)?.value ?? "clipboard";
-    setStatus(output === "clipboard" ? "Screenshot copied" : "Screenshot downloaded", "");
+    if (editorToggle.checked) {
+      setStatus("Opened in editor", "");
+    } else {
+      const output = outputInputs.find((input) => input.checked)?.value ?? "clipboard";
+      setStatus(output === "clipboard" ? "Screenshot copied" : "Screenshot downloaded", "");
+    }
   } catch (error) {
     console.error(error);
     setStatus(error.message || "Capture failed", "error");
@@ -218,4 +265,8 @@ fullPageButton.addEventListener("click", () => handleCapture("full-page"));
 viewportButton.addEventListener("click", () => handleCapture("viewport"));
 outputInputs.forEach((input) => {
   input.addEventListener("change", () => localStorage.setItem("screenshot-output", input.value));
+});
+editorToggle.addEventListener("change", () => {
+  localStorage.setItem("screenshot-editor", editorToggle.checked ? "on" : "off");
+  syncEditorToggle();
 });
