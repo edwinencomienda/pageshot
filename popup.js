@@ -2,6 +2,7 @@ const captureButtons = [
   ...document.querySelectorAll(".capture-actions button:not(#stop)"),
 ];
 const fullPageButton = document.querySelector("#capture-full-page");
+const areaButton = document.querySelector("#capture-area");
 const viewportButton = document.querySelector("#capture-viewport");
 const statusText = document.querySelector("#status");
 const statusDot = document.querySelector("#status-dot");
@@ -315,6 +316,150 @@ async function captureViewport(tab) {
   await saveOutput(blob, tab, "viewport");
 }
 
+
+// Injected into the page. Self-contained on purpose: it runs in the page,
+// where nothing else from this file exists. The popup is gone by the time the
+// drag starts, so the capture request goes through the service worker.
+function areaOverlay() {
+  if (window.__pageshotArea) return;
+  window.__pageshotArea = true;
+
+  const overlay = document.createElement("div");
+  overlay.style.cssText =
+    "position:fixed;inset:0;z-index:2147483647;cursor:crosshair;" +
+    "background:rgba(15,20,17,0.25);";
+
+  const box = document.createElement("div");
+  box.style.cssText =
+    "position:fixed;display:none;pointer-events:none;" +
+    "border:1px solid #fff;outline:1px dashed rgba(15,20,17,0.9);" +
+    "box-shadow:0 0 0 200000px rgba(15,20,17,0.25);";
+
+  const hint = document.createElement("div");
+  hint.textContent = "Drag to capture an area — Esc to cancel";
+  hint.style.cssText =
+    "position:fixed;top:16px;left:50%;transform:translateX(-50%);" +
+    "padding:8px 14px;border-radius:999px;background:#17211b;color:#e3ded0;" +
+    "font:700 12px system-ui,sans-serif;pointer-events:none;";
+
+  overlay.append(box, hint);
+  document.documentElement.append(overlay);
+
+  let start = null;
+
+  function cleanup() {
+    overlay.remove();
+    removeEventListener("keydown", onKey, true);
+    delete window.__pageshotArea;
+  }
+
+  function onKey(event) {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    cleanup();
+  }
+
+  function currentRect(event) {
+    const x = Math.min(start.x, event.clientX);
+    const y = Math.min(start.y, event.clientY);
+    return {
+      x,
+      y,
+      width: Math.abs(event.clientX - start.x),
+      height: Math.abs(event.clientY - start.y),
+    };
+  }
+
+  function say(message) {
+    const note = document.createElement("div");
+    note.textContent = message;
+    note.style.cssText = hint.style.cssText;
+    document.documentElement.append(note);
+    setTimeout(() => note.remove(), 2000);
+  }
+
+  async function finish(rect) {
+    cleanup();
+    if (rect.width < 4 || rect.height < 4) return;
+
+    // Two frames, so the shot is taken after the overlay's dimming is gone.
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve)),
+    );
+
+    const shot = await chrome.runtime.sendMessage({ type: "capture-visible" });
+    if (!shot?.dataUrl) {
+      say(shot?.error || "Capture failed");
+      return;
+    }
+
+    const image = await createImageBitmap(await (await fetch(shot.dataUrl)).blob());
+    const scale = image.width / innerWidth;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(rect.width * scale));
+    canvas.height = Math.max(1, Math.round(rect.height * scale));
+    canvas.getContext("2d").drawImage(
+      image,
+      Math.round(rect.x * scale),
+      Math.round(rect.y * scale),
+      canvas.width,
+      canvas.height,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
+    image.close();
+
+    const blob = await new Promise((resolve) =>
+      canvas.toBlob(resolve, "image/png"),
+    );
+    if (!blob) {
+      say("PNG creation failed");
+      return;
+    }
+
+    // Area shots always land in the editor — cropping a region and then
+    // dressing it up is the whole point of the feature.
+    const reader = new FileReader();
+    const dataUrl = await new Promise((resolve) => {
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+    const result = await chrome.runtime.sendMessage({
+      type: "open-editor",
+      dataUrl,
+    });
+    if (result?.error) say(result.error);
+  }
+
+  overlay.addEventListener("mousedown", (event) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    start = { x: event.clientX, y: event.clientY };
+    box.style.display = "block";
+  });
+
+  overlay.addEventListener("mousemove", (event) => {
+    if (!start) return;
+    const rect = currentRect(event);
+    overlay.style.background = "transparent";
+    hint.style.display = "none";
+    box.style.left = `${rect.x}px`;
+    box.style.top = `${rect.y}px`;
+    box.style.width = `${rect.width}px`;
+    box.style.height = `${rect.height}px`;
+  });
+
+  overlay.addEventListener("mouseup", (event) => {
+    if (!start) return;
+    finish(currentRect(event));
+  });
+
+  addEventListener("keydown", onKey, true);
+}
+
 async function handleCapture(captureType) {
   stopRequested = false;
   captureButtons.forEach((button) => {
@@ -362,6 +507,20 @@ stopButton.addEventListener("click", () => {
 });
 
 fullPageButton.addEventListener("click", () => handleCapture("full-page"));
+
+areaButton.addEventListener("click", async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id || !/^https?:/.test(tab.url ?? "")) {
+    setStatus("Open a regular website first.", "error");
+    return;
+  }
+
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: areaOverlay,
+  });
+  window.close();
+});
 viewportButton.addEventListener("click", () => handleCapture("viewport"));
 editorToggle.addEventListener("change", () => {
   localStorage.setItem("screenshot-editor", editorToggle.checked ? "on" : "off");

@@ -31,10 +31,13 @@ To update later: `git pull`, then click the refresh icon on the extension card.
 
 1. Open any normal `http://` or `https://` page.
 2. Click the extension icon.
-3. Click **Visible area only** or **Capture full page**.
+3. Click **Visible area only**, **Select an area**, or **Capture full page**.
 
-The shot lands on your clipboard. To save it as a file instead, or to dress it
-up first, switch on **Open in editor** before capturing.
+**Select an area** turns the cursor into a crosshair — drag a rectangle over
+the part you want (Esc cancels) and it opens straight in the editor.
+
+The other two land on your clipboard. To save one as a file instead, or to
+dress it up first, switch on **Open in editor** before capturing.
 
 For a full-page capture, leave the page and popup open while it scrolls. The
 status line tells you how far along it is, and **Stop** ends it early.
@@ -110,6 +113,7 @@ its own canvas.
 | File | Job |
 | --- | --- |
 | `popup.html` / `.css` / `.js` | The toolbar popup and the capture + stitch logic. |
+| `background.js` | Photographs the tab for area captures, after the popup has closed. |
 | `editor.html` / `.css` / `.js` | The background editor tab. |
 | `store.js` | Passes the captured PNG from popup to editor. |
 | `icons/` | Toolbar and store icons (16/32/48/128 px). |
