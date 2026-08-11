@@ -37,7 +37,7 @@ The shot lands on your clipboard. To save it as a file instead, or to dress it
 up first, switch on **Open in editor** before capturing.
 
 For a full-page capture, leave the page and popup open while it scrolls. The
-status line tells you how far along it is.
+status line tells you how far along it is, and **Stop** ends it early.
 
 ### Add a background
 
