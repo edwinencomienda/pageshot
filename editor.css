@@ -672,3 +672,58 @@ button:disabled {
     transition: none;
   }
 }
+
+/* Toasts, top centre, stacked newest last. */
+.toasts {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  z-index: 10;
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.toast {
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: var(--accent-ink);
+  background: var(--ink);
+  box-shadow: 0 6px 18px rgba(15, 20, 17, 0.18);
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 1;
+  transition: opacity 220ms ease, transform 220ms ease;
+  animation: toast-in 220ms ease;
+}
+
+.toast.error {
+  background: #c83d2f;
+  color: #fff;
+}
+
+.toast.leaving {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+    transition: opacity 220ms ease;
+  }
+
+  .toast.leaving {
+    transform: none;
+  }
+}

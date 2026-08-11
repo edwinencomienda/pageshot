@@ -8,6 +8,7 @@ const marquee = document.querySelector("#marquee");
 const emptyState = document.querySelector("#empty");
 const dimensions = document.querySelector("#dimensions");
 const statusText = document.querySelector("#status");
+const toastList = document.querySelector("#toasts");
 const solidList = document.querySelector("#solids");
 const gradientList = document.querySelector("#gradients");
 const borderToggle = document.querySelector("#border");
@@ -203,6 +204,23 @@ function labelShortcuts() {
 function setStatus(message, state = "") {
   statusText.textContent = message;
   statusText.className = `status ${state}`;
+}
+
+// Copying leaves nothing on screen to show it worked, so it gets a toast on top
+// of the status line. Downloads have Chrome's own shelf, so they only toast on
+// failure.
+function showToast(message, state = "") {
+  const toast = document.createElement("p");
+  toast.className = `toast ${state}`.trim();
+  toast.textContent = message;
+  toastList.append(toast);
+
+  setTimeout(() => {
+    toast.classList.add("leaving");
+    toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+    // In case the transition never runs and the event never lands.
+    setTimeout(() => toast.remove(), 600);
+  }, 2400);
 }
 
 /* ---------- undo / redo ---------- */
@@ -453,13 +471,20 @@ function commit() {
 
 // Figma/iOS-style corners: the curve starts further along each edge than a
 // plain arc does and eases into it, so there is no visible kink where the
-// straight edge meets the corner. EXTENT is how far along the edge the curve
-// reaches, PULL how close its handles sit to the corner point.
+// straight edge meets the corner. EXTENT turns a radius into how far along the
+// edge the curve reaches, PULL sets how close its handles sit to the corner.
 const CORNER_EXTENT = 1.4;
-const CORNER_PULL = 0.36;
+const CORNER_PULL = 0.4;
 
-function squirclePath(ctx, x, y, width, height, radius) {
-  const k = Math.min(radius * CORNER_EXTENT, width / 2, height / 2);
+function cornerExtent(radius) {
+  return radius * CORNER_EXTENT;
+}
+
+// Takes the extent rather than a radius, so a border can draw a path that runs
+// parallel to the shot's: growing the extent by the border width offsets the
+// whole curve by that width, which scaling the radius would not do.
+function squirclePath(ctx, x, y, width, height, extent) {
+  const k = Math.min(extent, width / 2, height / 2);
 
   if (k <= 0) {
     ctx.rect(x, y, width, height);
@@ -525,8 +550,20 @@ function paintBackground(width, height) {
 function render() {
   if (!shot) return;
 
+  // Radius, border and shadow scale with the shot so a retina capture is not
+  // under-styled.
+  const scale = Math.max(1, shot.width / 1200);
+  const radius = Math.min(settings.radius * scale, shot.width / 2, shot.height / 2);
+
+  // The border is drawn around the shot rather than over it, so the frame grows
+  // by its width and no pixels of the capture are covered.
+  const lineWidth =
+    settings.border && settings.borderWidth > 0
+      ? Math.round(settings.borderWidth * scale)
+      : 0;
+
   // Padding is a share of the shot's width so the frame looks even on any size.
-  const inset = Math.round((settings.padding / 100) * shot.width);
+  const inset = Math.round((settings.padding / 100) * shot.width) + lineWidth;
   const width = shot.width + inset * 2;
   const height = shot.height + inset * 2;
 
@@ -535,9 +572,16 @@ function render() {
   composedContext.clearRect(0, 0, width, height);
   paintBackground(width, height);
 
-  // Radius and shadow scale with the shot so a retina capture is not under-styled.
-  const scale = Math.max(1, shot.width / 1200);
-  const radius = Math.min(settings.radius * scale, shot.width / 2, shot.height / 2);
+  // The shot's box, and the box the border's outer edge follows.
+  const shotX = inset;
+  const shotY = inset;
+  const outerX = shotX - lineWidth;
+  const outerY = shotY - lineWidth;
+  const outerWidth = shot.width + lineWidth * 2;
+  const outerHeight = shot.height + lineWidth * 2;
+  // Parallel to the shot's corner, one border width out.
+  const shotExtent = cornerExtent(radius);
+  const outerExtent = shotExtent + lineWidth;
 
   if (settings.shadow > 0 && inset > 0) {
     const strength = settings.shadow / 100;
@@ -546,37 +590,43 @@ function render() {
     composedContext.shadowBlur = Math.max(12, inset * 1.1 * strength);
     composedContext.shadowOffsetY = Math.max(3, inset * 0.35 * strength);
     composedContext.beginPath();
-    squirclePath(composedContext, inset, inset, shot.width, shot.height, radius);
+    squirclePath(
+      composedContext,
+      outerX,
+      outerY,
+      outerWidth,
+      outerHeight,
+      outerExtent,
+    );
     composedContext.fillStyle = "#000";
+    composedContext.fill();
+    composedContext.restore();
+  }
+
+  // Filled first so the border has something solid behind its inner edge, then
+  // the shot is clipped to the same corner on top of it.
+  if (lineWidth > 0) {
+    composedContext.save();
+    composedContext.fillStyle = settings.borderColor;
+    composedContext.beginPath();
+    squirclePath(
+      composedContext,
+      outerX,
+      outerY,
+      outerWidth,
+      outerHeight,
+      outerExtent,
+    );
     composedContext.fill();
     composedContext.restore();
   }
 
   composedContext.save();
   composedContext.beginPath();
-  squirclePath(composedContext, inset, inset, shot.width, shot.height, radius);
+  squirclePath(composedContext, shotX, shotY, shot.width, shot.height, shotExtent);
   composedContext.clip();
-  composedContext.drawImage(shot, inset, inset);
+  composedContext.drawImage(shot, shotX, shotY);
   composedContext.restore();
-
-  // Drawn just inside the screenshot's edge so it never changes the frame size.
-  if (settings.border && settings.borderWidth > 0) {
-    const lineWidth = settings.borderWidth * scale;
-    composedContext.save();
-    composedContext.strokeStyle = settings.borderColor;
-    composedContext.lineWidth = lineWidth;
-    composedContext.beginPath();
-    squirclePath(
-      composedContext,
-      inset + lineWidth / 2,
-      inset + lineWidth / 2,
-      Math.max(0, shot.width - lineWidth),
-      Math.max(0, shot.height - lineWidth),
-      Math.max(0, radius - lineWidth / 2),
-    );
-    composedContext.stroke();
-    composedContext.restore();
-  }
 
   // The crop takes background and screenshot together, whatever it covers.
   const sourceX = Math.round(settings.crop.x * width);
@@ -687,9 +737,11 @@ async function copyImage() {
       new ClipboardItem({ "image/png": await toBlob() }),
     ]);
     setStatus("Copied to clipboard");
+    showToast("Copied to clipboard");
   } catch (error) {
     console.error(error);
     setStatus(error.message || "Copy failed", "error");
+    showToast(error.message || "Copy failed", "error");
   }
 }
 
@@ -707,6 +759,7 @@ async function downloadImage() {
   } catch (error) {
     console.error(error);
     setStatus("Download failed", "error");
+    showToast("Download failed", "error");
   }
 }
 
