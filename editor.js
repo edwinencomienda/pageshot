@@ -36,6 +36,8 @@ const copyButton = document.querySelector("#copy");
 const downloadButton = document.querySelector("#download");
 
 const SOLIDS = [
+  // Draws nothing, so the PNG keeps its alpha channel.
+  { id: "none", label: "Transparent", transparent: true },
   { id: "paper", label: "Paper", color: "#f4f0e6" },
   { id: "ink", label: "Ink", color: "#17211b" },
   { id: "white", label: "White", color: "#ffffff" },
@@ -54,16 +56,16 @@ const SOLIDS = [
 ];
 
 const GRADIENTS = [
-  { id: "acid", label: "Acid", gradient: ["#eaffa0", "#a8d900"] },
-  { id: "clay", label: "Clay", gradient: ["#f0dccb", "#c49a7f"] },
-  { id: "slate", label: "Slate", gradient: ["#4a5b64", "#1d262b"] },
-  { id: "dusk", label: "Dusk", gradient: ["#2f3a5c", "#7d5a6b"] },
-  { id: "ember", label: "Ember", gradient: ["#f7c05b", "#c0392b"] },
-  { id: "ocean", label: "Ocean", gradient: ["#7fd4d0", "#1b4b6b"] },
-  { id: "orchid", label: "Orchid", gradient: ["#f3c4e0", "#6a3d7a"] },
-  { id: "moss", label: "Moss", gradient: ["#cfe0a8", "#3f5a2f"] },
-  { id: "peach", label: "Peach", gradient: ["#ffd9c0", "#e8746b"] },
-  { id: "midnight", label: "Midnight", gradient: ["#3a3f5c", "#0d0f1a"] },
+  { id: "bitmap", label: "Bitmap", gradient: ["#c9292b", "#8f1b1c"] },
+  { id: "noir", label: "Noir", gradient: ["#9a9a9a", "#5c5c5c"] },
+  { id: "ice", label: "Ice", gradient: ["#e6f9fb", "#b3e9f1"] },
+  { id: "sand", label: "Sand", gradient: ["#e4c9a7", "#c9a67c"] },
+  { id: "forest", label: "Forest", gradient: ["#4a6350", "#33452f"] },
+  { id: "mono", label: "Mono", gradient: ["#333333", "#1f1f1f"] },
+  { id: "breeze", label: "Breeze", gradient: ["#c132a8", "#9435c6"] },
+  { id: "candy", label: "Candy", gradient: ["#cba9fb", "#ad93f8"] },
+  { id: "crimson", label: "Crimson", gradient: ["#e66060", "#b04747"] },
+  { id: "falcon", label: "Falcon", gradient: ["#a8c3d0", "#73879b"] },
 ];
 
 // `css` mirrors the canvas fill so each swatch previews what it draws.
@@ -72,6 +74,7 @@ const BACKGROUNDS = [...SOLIDS, ...GRADIENTS].map((background) => ({
   css: background.gradient
     ? `linear-gradient(135deg, ${background.gradient[0]}, ${background.gradient[1]})`
     : background.color,
+  transparent: Boolean(background.transparent),
 }));
 
 const FULL_CROP = { x: 0, y: 0, width: 1, height: 1 };
@@ -80,7 +83,7 @@ const FULL_CROP = { x: 0, y: 0, width: 1, height: 1 };
 // crop is a share of the whole frame, so it survives padding changes.
 const settings = {
   mode: "preset",
-  preset: BACKGROUNDS[0].id,
+  preset: "paper",
   color: colorInput.value,
   padding: Number(paddingInput.value),
   radius: Number(radiusInput.value),
@@ -259,7 +262,10 @@ function loadPreferences() {
 /* ---------- controls ---------- */
 
 function currentPreset() {
-  return BACKGROUNDS.find((item) => item.id === settings.preset) ?? BACKGROUNDS[0];
+  return (
+    BACKGROUNDS.find((item) => item.id === settings.preset) ??
+    BACKGROUNDS.find((item) => item.id === DEFAULTS.preset)
+  );
 }
 
 function isCropped() {
@@ -272,6 +278,15 @@ function readableInk(hex) {
   const value = hex.replace("#", "");
   const [r, g, b] = [0, 2, 4].map((index) => parseInt(value.slice(index, index + 2), 16));
   return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? "#17211b" : "#f4f0e6";
+}
+
+// Chrome can't colour the filled half of a range on its own, so the track
+// reads a --fill percentage from the element.
+function paintSliderFill(input) {
+  const min = Number(input.min || 0);
+  const max = Number(input.max || 100);
+  const ratio = max === min ? 0 : (Number(input.value) - min) / (max - min);
+  input.style.setProperty("--fill", `${ratio * 100}%`);
 }
 
 function syncControls() {
@@ -296,6 +311,8 @@ function syncControls() {
 
   colorInput.value = settings.color;
 
+  document.querySelectorAll('input[type="range"]').forEach(paintSliderFill);
+
   document.querySelectorAll('input[name="background"]').forEach((input) => {
     if (settings.mode === "image") input.checked = input.value === settings.imageId;
     else if (settings.mode === "color") input.checked = input.value === settings.color;
@@ -306,9 +323,9 @@ function syncControls() {
 function buildSwatches(backgrounds, container) {
   backgrounds.forEach((background) => {
     const label = document.createElement("label");
-    label.className = "swatch";
+    label.className = background.transparent ? "swatch swatch-none" : "swatch";
     label.title = background.label;
-    label.style.background = background.css;
+    if (background.css) label.style.background = background.css;
 
     const input = document.createElement("input");
     input.type = "radio";
@@ -459,6 +476,9 @@ function paintBackground(width, height) {
   }
 
   const background = currentPreset();
+
+  // Nothing to paint — the cleared canvas is the transparent background.
+  if (background.transparent) return;
 
   if (background.gradient) {
     const gradient = composedContext.createLinearGradient(0, 0, width, height);

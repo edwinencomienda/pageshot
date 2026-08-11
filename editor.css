@@ -2,9 +2,11 @@
   color-scheme: light;
   --ink: #17211b;
   --paper: #f4f0e6;
-  --acid: #d9ff57;
   --muted: #69736c;
   --line: rgba(23, 33, 27, 0.16);
+  /* Pulled from the extension icon. */
+  --accent: #787878;
+  --accent-ink: #e3ded0;
 }
 
 * {
@@ -31,12 +33,11 @@ header {
   border-bottom: 1px solid var(--line);
 }
 
-.viewfinder {
-  width: 12px;
-  height: 12px;
-  align-self: center;
-  border: 1.5px solid currentColor;
-  background: linear-gradient(var(--ink), var(--ink)) center / 4px 4px no-repeat;
+.brand-mark {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
 }
 
 h1 {
@@ -47,19 +48,27 @@ h1 {
   letter-spacing: -0.02em;
 }
 
-h1 em {
+/* Sits beside the name; the em keeps the old highlighted flourish. */
+.tagline {
+  margin-left: 2px;
+  color: var(--muted);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 14px;
+}
+
+.tagline em {
   position: relative;
   z-index: 0;
 }
 
-h1 em::after {
+.tagline em::after {
   position: absolute;
   z-index: -1;
   right: -3px;
   bottom: 1px;
   left: -2px;
-  height: 8px;
-  background: var(--acid);
+  height: 7px;
+  background: var(--accent-ink);
   content: "";
   transform: rotate(-1.5deg);
 }
@@ -84,6 +93,23 @@ h1 em::after {
 .history button:disabled {
   color: var(--muted);
   opacity: 0.4;
+}
+
+.credit {
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 140ms ease;
+}
+
+.credit:hover,
+.credit:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
 }
 
 .dimensions {
@@ -111,7 +137,11 @@ main {
   background: #e3ded0;
 }
 
+/* Checkerboard behind the canvas, so a transparent background reads as one.
+   Opaque backgrounds simply cover it. */
 .frame {
+  background: repeating-conic-gradient(var(--line) 0% 25%, var(--paper) 0% 50%) 0 0 /
+    16px 16px;
   position: relative;
   display: flex;
   max-width: 100%;
@@ -130,7 +160,7 @@ canvas {
   position: absolute;
   border: 1px solid var(--paper);
   outline: 1px dashed var(--ink);
-  background: rgba(217, 255, 87, 0.18);
+  background: rgba(120, 120, 120, 0.22);
   pointer-events: none;
 }
 
@@ -254,20 +284,21 @@ output {
   border-radius: 50%;
   background: var(--ink);
   content: "";
-  transition: transform 160ms ease;
+  transition: transform 160ms ease, background 160ms ease;
 }
 
 .switch:has(input:checked) .switch-track {
-  border-color: var(--ink);
-  background: var(--acid);
+  border-color: var(--accent);
+  background: var(--accent);
 }
 
 .switch:has(input:checked) .switch-track::after {
+  background: var(--accent-ink);
   transform: translateX(13px);
 }
 
 .switch:has(input:focus-visible) .switch-track {
-  outline: 2px solid #6b8f00;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -304,6 +335,15 @@ fieldset:has(#border:not(:checked)) .slider-row {
   transition: box-shadow 140ms ease, transform 140ms ease;
 }
 
+/* Checkerboard, so "no background" looks like the usual transparency stand-in. */
+.swatch-none {
+  background: repeating-conic-gradient(
+      var(--line) 0% 25%,
+      var(--paper) 0% 50%
+    )
+    0 0 / 10px 10px;
+}
+
 .swatch input {
   position: absolute;
   width: 1px;
@@ -316,19 +356,72 @@ fieldset:has(#border:not(:checked)) .slider-row {
 }
 
 .swatch:has(input:checked) {
-  border-color: var(--ink);
-  box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px var(--ink);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--paper), inset 0 0 0 3px var(--accent);
 }
 
 .swatch:has(input:focus-visible) {
-  outline: 2px solid #6b8f00;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
+/* Drawn by hand rather than left to accent-color, so the filled part of the
+   track, the groove and the thumb all sit in the icon's palette. */
 input[type="range"] {
   width: 100%;
+  height: 14px;
   margin: 0;
-  accent-color: #8ab800;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* --fill is how far along the thumb sits; editor.js keeps it in sync. */
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(var(--accent), var(--accent)) 0 / var(--fill, 0%)
+      100% no-repeat,
+    var(--line);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+}
+
+input[type="range"]::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 1px var(--paper);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+input[type="range"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .custom-row {
@@ -376,8 +469,8 @@ input[type="range"] {
 }
 
 .custom-color:hover {
-  border-color: var(--ink);
-  color: var(--ink);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .custom-color input {
@@ -391,12 +484,12 @@ input[type="range"] {
 
 .custom-color.active {
   border-style: solid;
-  border-color: var(--ink);
-  color: var(--ink);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .custom-color:has(input:focus-visible) {
-  outline: 2px solid #6b8f00;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -415,8 +508,8 @@ input[type="range"] {
 }
 
 .upload:hover {
-  border-color: var(--ink);
-  color: var(--ink);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .upload > span {
@@ -473,7 +566,7 @@ input[type="range"] {
 }
 
 .upload:has(input:focus-visible) {
-  outline: 2px solid #6b8f00;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -516,7 +609,7 @@ button:hover:not(:disabled) {
 }
 
 button:focus-visible {
-  outline: 2px solid #6b8f00;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 

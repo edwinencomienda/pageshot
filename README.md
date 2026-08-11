@@ -1,3 +1,5 @@
+<img src="icons/icon128.png" alt="" width="72" height="72" />
+
 # PageShot
 
 A tiny, open-source Chrome extension that screenshots a whole webpage — or just
@@ -41,9 +43,10 @@ Flip on **Open in editor** in the popup before capturing. Instead of copying or
 downloading right away, the screenshot opens in a new tab where you can put a
 background behind it:
 
-- **Background** — 15 solid colors and 10 gradients built in. Add your own solid
-  colors with the picker and your own images with **Add image** — as many of each
-  as you like. They stay in the sidebar for next time; hover one and click **×**
+- **Background** — a transparent option, 15 solid colors and 10 gradients built
+  in. Transparent keeps the PNG's alpha, so the padding around the shot stays
+  see-through. Add your own solid colors with the picker and your own images with
+  **Add image** — as many of each as you like. They stay in the sidebar for next time; hover one and click **×**
   to delete it.
 - **Padding** — how much background shows around the shot.
 - **Corners** — rounds the screenshot's edges.
