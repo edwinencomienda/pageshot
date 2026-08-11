@@ -1,4 +1,4 @@
-# Full Page Screenshot
+# PageShot
 
 A tiny, open-source Chrome extension that screenshots a whole webpage — or just
 the part you can see — and copies it to your clipboard or saves it as a PNG.
@@ -88,6 +88,7 @@ redraws the background and screenshot onto its own canvas.
 | `popup.html` / `.css` / `.js` | The toolbar popup and the capture + stitch logic. |
 | `editor.html` / `.css` / `.js` | The background editor tab. |
 | `store.js` | Passes the captured PNG from popup to editor. |
+| `icons/` | Toolbar and store icons (16/32/48/128 px). |
 | `manifest.json` | Extension setup and permissions. |
 
 ## Permissions, and why each is needed
