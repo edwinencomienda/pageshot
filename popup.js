@@ -38,6 +38,15 @@ function preparePage() {
   root.style.scrollBehavior = "auto";
   if (body) body.style.scrollBehavior = "auto";
 
+  // captureVisibleTab shoots the viewport as drawn, scrollbars included, so
+  // they are hidden for the duration. Measuring happens after, since losing
+  // the scrollbar widens the page.
+  const hideScrollbars = document.createElement("style");
+  hideScrollbars.id = "__pageshot-hide-scrollbars";
+  hideScrollbars.textContent = `html { scrollbar-width: none !important; }
+    html::-webkit-scrollbar, body::-webkit-scrollbar { display: none !important; }`;
+  (document.head ?? root).append(hideScrollbars);
+
   window.__fullPageScreenshot = original;
 
   return {
@@ -55,6 +64,8 @@ function scrollPageTo(x, y) {
 }
 
 function restorePage() {
+  document.querySelector("#__pageshot-hide-scrollbars")?.remove();
+
   const original = window.__fullPageScreenshot;
   if (!original) return;
 
@@ -181,6 +192,10 @@ async function captureFullPage(tab) {
 
 async function captureViewport(tab) {
   setStatus("Capturing viewport");
+  // Only for the sake of hiding the scrollbars; the measurements go unused.
+  await runOnPage(tab.id, preparePage);
+  // Give the page a moment to repaint without them.
+  await wait(120);
   const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, {
     format: "png",
   });
@@ -211,7 +226,7 @@ async function handleCapture(captureType) {
     console.error(error);
     setStatus(error.message || "Capture failed", "error");
   } finally {
-    if (captureType === "full-page" && activeTab?.id) {
+    if (activeTab?.id) {
       await runOnPage(activeTab.id, restorePage).catch(() => {});
     }
     captureButtons.forEach((button) => {

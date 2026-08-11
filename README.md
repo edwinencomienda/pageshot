@@ -92,10 +92,11 @@ the browser's maximum image size.
 
 ## How it works
 
-`popup.js` scrolls the page one screen at a time, snaps each screen with
-`chrome.tabs.captureVisibleTab`, and stitches the pieces onto a single canvas.
-Chrome caps capturing at two shots per second, so tall pages take a few seconds.
-The page's scroll position is restored when it finishes.
+`popup.js` hides the page's scrollbars, scrolls it one screen at a time, snaps
+each screen with `chrome.tabs.captureVisibleTab`, and stitches the pieces onto a
+single canvas. Chrome caps capturing at two shots per second, so tall pages take
+a few seconds. The scrollbars and the page's scroll position are restored when
+it finishes.
 
 The editor is a second extension page (`editor.html`). The captured PNG is
 handed over through IndexedDB (`store.js`) rather than the URL, because
