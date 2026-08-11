@@ -8,16 +8,10 @@
   </head>
   <body>
     <main>
-      <div id="output-options" class="output-options" role="radiogroup" aria-label="After capture">
-        <label class="output-option">
-          <input type="radio" name="output" value="clipboard" checked />
-          <span>Copy</span>
-        </label>
-        <label class="output-option">
-          <input type="radio" name="output" value="download" />
-          <span>Download</span>
-        </label>
-      </div>
+      <header class="brand">
+        <img src="icons/icon48.png" alt="" width="20" height="20" />
+        <span>PageShot</span>
+      </header>
 
       <label class="switch">
         <span class="switch-label">Open in editor</span>
@@ -26,15 +20,15 @@
       </label>
 
       <div class="capture-actions">
-        <button id="capture-full-page" type="button">Capture full page</button>
-        <button id="capture-viewport" class="secondary-button" type="button">
-          Visible area only
+        <button id="capture-viewport" type="button">Visible area only</button>
+        <button id="capture-full-page" class="secondary-button" type="button">
+          Capture full page
         </button>
       </div>
 
       <div class="status-row" aria-live="polite">
         <span id="status-dot" class="status-dot"></span>
-        <span id="status">Ready</span>
+        <span id="status"></span>
       </div>
     </main>
 

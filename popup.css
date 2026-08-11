@@ -27,49 +27,17 @@ main {
   padding: 14px;
 }
 
-.output-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border: 1px solid var(--line);
-  border-radius: 2px;
-  overflow: hidden;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15px;
 }
 
-.output-option {
-  display: grid;
-  min-height: 30px;
-  place-items: center;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 700;
-  transition: color 160ms ease, background 160ms ease;
-}
-
-.output-option + .output-option {
-  border-left: 1px solid var(--line);
-}
-
-.output-option input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-}
-
-.output-option:has(input:checked) {
-  color: var(--accent-ink);
-  background: var(--accent);
-}
-
-.output-option:has(input:focus-visible) {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
-/* Dimmed while the editor handles the output instead. */
-.output-options.inactive {
-  opacity: 0.45;
+.brand img {
+  display: block;
+  border-radius: 5px;
 }
 
 .switch {
@@ -175,6 +143,11 @@ button:disabled {
   text-transform: uppercase;
 }
 
+/* Hidden until there is something to report. */
+.status-row:has(#status:empty) {
+  visibility: hidden;
+}
+
 .status-dot {
   width: 6px;
   height: 6px;
@@ -199,7 +172,6 @@ button:disabled {
 
 @media (prefers-reduced-motion: reduce) {
   .status-dot.busy,
-  .output-option,
   .switch-track,
   .switch-track::after {
     transition: none;

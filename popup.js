@@ -3,26 +3,9 @@ const fullPageButton = document.querySelector("#capture-full-page");
 const viewportButton = document.querySelector("#capture-viewport");
 const statusText = document.querySelector("#status");
 const statusDot = document.querySelector("#status-dot");
-const outputInputs = [...document.querySelectorAll('input[name="output"]')];
-const outputOptions = document.querySelector("#output-options");
 const editorToggle = document.querySelector("#use-editor");
-const savedOutput = localStorage.getItem("screenshot-output");
-
-if (savedOutput) {
-  const savedInput = outputInputs.find((input) => input.value === savedOutput);
-  if (savedInput) savedInput.checked = true;
-}
 
 editorToggle.checked = localStorage.getItem("screenshot-editor") === "on";
-
-function syncEditorToggle() {
-  outputOptions.classList.toggle("inactive", editorToggle.checked);
-  outputInputs.forEach((input) => {
-    input.disabled = editorToggle.checked;
-  });
-}
-
-syncEditorToggle();
 
 const wait = (milliseconds) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -89,20 +72,6 @@ function safeFilename(url, captureType) {
   return `${hostname || "webpage"}-${captureType}-${timestamp}.png`;
 }
 
-async function downloadPng(blob, tab, captureType) {
-  const objectUrl = URL.createObjectURL(blob);
-
-  try {
-    await chrome.downloads.download({
-      url: objectUrl,
-      filename: safeFilename(tab.url, captureType),
-      saveAs: false,
-    });
-  } finally {
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 30_000);
-  }
-}
-
 async function copyPng(blob) {
   await navigator.clipboard.write([
     new ClipboardItem({ "image/png": blob }),
@@ -140,13 +109,8 @@ async function saveOutput(blob, tab, captureType) {
     return;
   }
 
-  const output = outputInputs.find((input) => input.checked)?.value ?? "clipboard";
-  setStatus(output === "clipboard" ? "Copying image" : "Preparing download");
-  if (output === "clipboard") {
-    await copyPng(blob);
-  } else {
-    await downloadPng(blob, tab, captureType);
-  }
+  setStatus("Copying image");
+  await copyPng(blob);
 }
 
 async function captureFullPage(tab) {
@@ -242,12 +206,7 @@ async function handleCapture(captureType) {
     } else {
       await captureViewport(activeTab);
     }
-    if (editorToggle.checked) {
-      setStatus("Opened in editor", "");
-    } else {
-      const output = outputInputs.find((input) => input.checked)?.value ?? "clipboard";
-      setStatus(output === "clipboard" ? "Screenshot copied" : "Screenshot downloaded", "");
-    }
+    setStatus(editorToggle.checked ? "Opened in editor" : "Screenshot copied", "");
   } catch (error) {
     console.error(error);
     setStatus(error.message || "Capture failed", "error");
@@ -263,10 +222,6 @@ async function handleCapture(captureType) {
 
 fullPageButton.addEventListener("click", () => handleCapture("full-page"));
 viewportButton.addEventListener("click", () => handleCapture("viewport"));
-outputInputs.forEach((input) => {
-  input.addEventListener("change", () => localStorage.setItem("screenshot-output", input.value));
-});
 editorToggle.addEventListener("change", () => {
   localStorage.setItem("screenshot-editor", editorToggle.checked ? "on" : "off");
-  syncEditorToggle();
 });

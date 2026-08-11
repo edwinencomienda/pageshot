@@ -31,11 +31,13 @@ To update later: `git pull`, then click the refresh icon on the extension card.
 
 1. Open any normal `http://` or `https://` page.
 2. Click the extension icon.
-3. Pick **Copy** (default) or **Download**.
-4. Click **Capture full page** or **Visible area only**.
+3. Click **Visible area only** or **Capture full page**.
+
+The shot lands on your clipboard. To save it as a file instead, or to dress it
+up first, switch on **Open in editor** before capturing.
 
 For a full-page capture, leave the page and popup open while it scrolls. The
-status line at the bottom tells you when it's done.
+status line tells you how far along it is.
 
 ### Add a background
 
@@ -58,6 +60,19 @@ background behind it:
   image** puts it back.
 
 Then hit **Copy image** or **Download** from the editor.
+
+### Presets
+
+Once a look suits you, click **Save** in the header and give it a name. Pick it
+from the **Presets** dropdown any time to apply it again.
+
+With a preset picked, **Save** becomes **Update** and writes your tweaks over
+it, **Save as new** keeps it and starts another, and **Delete** drops it.
+
+A preset stores the background, padding, corners, shadow and border — not the
+crop, which belongs to a single screenshot. They live in the browser, so they
+stay between captures — including which one you had picked, and each new
+screenshot starts from that preset's saved look rather than your last tweaks.
 
 ### Shortcuts
 

@@ -10,12 +10,41 @@
     <header>
       <img class="brand-mark" src="icons/icon48.png" alt="" width="24" height="24" />
       <h1>PageShot</h1>
-      <span class="tagline">Dress it <em>up.</em></span>
       <div class="history">
         <button id="undo" type="button" aria-label="Undo">↺</button>
         <button id="redo" type="button" aria-label="Redo">↻</button>
       </div>
+      <div class="presets">
+        <select id="preset-picker" aria-label="Saved presets">
+          <option value="">Presets</option>
+        </select>
+        <button id="preset-save" class="ghost-button" type="button" title="Save the current look as a preset">
+          Save
+        </button>
+        <button id="preset-save-as" class="ghost-button" type="button" title="Save the current look as a new preset" hidden>
+          Save as new
+        </button>
+        <button id="preset-delete" class="ghost-button" type="button" title="Delete the selected preset" disabled>
+          Delete
+        </button>
+      </div>
+
       <span id="dimensions" class="dimensions"></span>
+      <a
+        class="repo-link"
+        href="https://github.com/edwinencomienda/pageshot"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="PageShot on GitHub"
+        title="PageShot on GitHub"
+      >
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38l-.01-1.34c-2.23.48-2.7-1.07-2.7-1.07-.36-.93-.89-1.18-.89-1.18-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.67.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.83-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.22 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.52.56.83 1.28.83 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.14.46.55.38A8 8 0 0 0 8 0Z"
+          />
+        </svg>
+      </a>
       <a
         class="credit"
         href="https://x.com/edwinencomienda"
@@ -83,12 +112,12 @@
 
         <fieldset>
           <legend>Corners <output id="radius-value"></output></legend>
-          <input id="radius" type="range" min="0" max="48" step="1" value="14" />
+          <input id="radius" type="range" min="0" max="48" step="1" value="12" />
         </fieldset>
 
         <fieldset>
           <legend>Shadow <output id="shadow-value"></output></legend>
-          <input id="shadow" type="range" min="0" max="100" step="5" value="45" />
+          <input id="shadow" type="range" min="0" max="100" step="5" value="10" />
         </fieldset>
 
         <fieldset>

@@ -9,6 +9,10 @@ const emptyState = document.querySelector("#empty");
 const dimensions = document.querySelector("#dimensions");
 const statusText = document.querySelector("#status");
 const toastList = document.querySelector("#toasts");
+const presetPicker = document.querySelector("#preset-picker");
+const presetSave = document.querySelector("#preset-save");
+const presetSaveAs = document.querySelector("#preset-save-as");
+const presetDelete = document.querySelector("#preset-delete");
 const solidList = document.querySelector("#solids");
 const gradientList = document.querySelector("#gradients");
 const borderToggle = document.querySelector("#border");
@@ -277,6 +281,140 @@ function loadPreferences() {
   }
 }
 
+/* ---------- saved presets ---------- */
+
+// A preset is the whole look minus the crop, which belongs to one shot only.
+// Uploaded backgrounds are kept by id, so a preset made with an image that has
+// since been deleted falls back to the plain preset background.
+let presets = [];
+
+function presetFromSettings() {
+  const { crop, ...look } = settings;
+  return look;
+}
+
+function savePresets() {
+  localStorage.setItem("editor-presets", JSON.stringify(presets));
+}
+
+// Which preset is selected outlives a refresh or a fresh capture; the settings
+// themselves are already remembered separately, so this only restores the
+// dropdown and what its buttons offer.
+function rememberActivePreset() {
+  localStorage.setItem("editor-preset-name", presetPicker.value);
+}
+
+function activePresetName() {
+  return localStorage.getItem("editor-preset-name") ?? "";
+}
+
+function loadPresets() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("editor-presets") ?? "[]");
+    presets = Array.isArray(saved) ? saved.filter((item) => item?.name && item.look) : [];
+  } catch {
+    presets = [];
+  }
+}
+
+function buildPresetPicker(selected = "") {
+  presetPicker.textContent = "";
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = presets.length ? "Presets" : "No presets yet";
+  presetPicker.append(placeholder);
+
+  presets.forEach((preset) => {
+    const option = document.createElement("option");
+    option.value = preset.name;
+    option.textContent = preset.name;
+    presetPicker.append(option);
+  });
+
+  presetPicker.value = presets.some((preset) => preset.name === selected) ? selected : "";
+  rememberActivePreset();
+  syncPresetButtons();
+}
+
+// True once the current look has drifted from the preset it came from.
+function isPresetDirty() {
+  const preset = presets.find((item) => item.name === presetPicker.value);
+  if (!preset) return true;
+  return JSON.stringify(preset.look) !== JSON.stringify(presetFromSettings());
+}
+
+// With a preset picked, Save writes over it and "Save as new" starts another;
+// with none picked there is only one thing Save can mean. Both stay disabled
+// until something actually differs from the picked preset.
+function syncPresetButtons() {
+  const active = Boolean(presetPicker.value);
+  const dirty = isPresetDirty();
+  presetSave.textContent = active ? "Update" : "Save";
+  presetSave.title = active
+    ? `Save the current look over "${presetPicker.value}"`
+    : "Save the current look as a preset";
+  presetSave.disabled = active && !dirty;
+  presetSaveAs.hidden = !active;
+  presetSaveAs.disabled = !dirty;
+  presetDelete.disabled = !active;
+}
+
+function storePreset(name) {
+  const look = structuredClone(presetFromSettings());
+  const existing = presets.findIndex((preset) => preset.name === name);
+
+  if (existing >= 0) presets[existing] = { name, look };
+  else presets = [...presets, { name, look }];
+
+  savePresets();
+  buildPresetPicker(name);
+  setStatus(`Preset "${name}" saved`);
+  showToast(`Preset "${name}" saved`);
+}
+
+function saveNewPreset() {
+  const suggested = `Preset ${presets.length + 1}`;
+  const name = window.prompt("Name this preset", suggested)?.trim();
+  if (!name) return;
+
+  const clash = presets.some((preset) => preset.name === name);
+  if (clash && !window.confirm(`Replace the preset named "${name}"?`)) return;
+
+  storePreset(name);
+}
+
+// Updates the picked preset in place, or asks for a name when none is picked.
+function savePreset() {
+  if (presetPicker.value) storePreset(presetPicker.value);
+  else saveNewPreset();
+}
+
+function applyPreset(name) {
+  const preset = presets.find((item) => item.name === name);
+  if (!preset) return;
+
+  Object.assign(settings, structuredClone(preset.look));
+
+  // The image behind the preset may be long gone.
+  if (settings.mode === "image" && !selectedImage()) settings.mode = "preset";
+
+  // commit() re-syncs the controls, buttons included.
+  commit();
+  setStatus(`Preset "${name}" applied`);
+}
+
+function deleteSelectedPreset() {
+  const name = presetPicker.value;
+  if (!name) return;
+  if (!window.confirm(`Delete the preset named "${name}"?`)) return;
+
+  presets = presets.filter((preset) => preset.name !== name);
+  savePresets();
+  buildPresetPicker();
+  setStatus(`Preset "${name}" deleted`);
+}
+
 /* ---------- controls ---------- */
 
 function currentPreset() {
@@ -330,6 +468,7 @@ function syncControls() {
   colorInput.value = settings.color;
 
   document.querySelectorAll('input[type="range"]').forEach(paintSliderFill);
+  syncPresetButtons();
 
   document.querySelectorAll('input[name="background"]').forEach((input) => {
     if (settings.mode === "image") input.checked = input.value === settings.imageId;
@@ -854,10 +993,21 @@ document.addEventListener("keydown", (event) => {
 copyButton.addEventListener("click", copyImage);
 downloadButton.addEventListener("click", downloadImage);
 
+presetPicker.addEventListener("change", () => {
+  rememberActivePreset();
+  syncPresetButtons();
+  if (presetPicker.value) applyPreset(presetPicker.value);
+});
+presetSave.addEventListener("click", savePreset);
+presetSaveAs.addEventListener("click", saveNewPreset);
+presetDelete.addEventListener("click", deleteSelectedPreset);
+
 /* ---------- start ---------- */
 
 async function load() {
   loadPreferences();
+  loadPresets();
+  buildPresetPicker(activePresetName());
   loadCustomColors();
   buildColorSwatches();
   labelShortcuts();
@@ -892,10 +1042,18 @@ async function load() {
   filename = record.filename || filename;
 
   // A crop belongs to the shot it was drawn on, so a new capture starts whole.
-  // Background, padding, corners and shadow carry over on purpose.
+  // A picked preset also starts fresh from its saved look, dropping whatever
+  // was tweaked on the last shot; with none picked, the settings carry over.
   const lastShotId = localStorage.getItem("editor-shot-id");
   if (record.id && record.id !== lastShotId) {
     localStorage.setItem("editor-shot-id", record.id);
+
+    const preset = presets.find((item) => item.name === presetPicker.value);
+    if (preset) {
+      Object.assign(settings, structuredClone(preset.look));
+      if (settings.mode === "image" && !selectedImage()) settings.mode = "preset";
+    }
+
     settings.crop = { ...FULL_CROP };
     history.entries = [];
     history.index = -1;
