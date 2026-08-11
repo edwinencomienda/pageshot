@@ -451,6 +451,37 @@ function commit() {
 
 /* ---------- drawing ---------- */
 
+// Figma/iOS-style corners: the curve starts further along each edge than a
+// plain arc does and eases into it, so there is no visible kink where the
+// straight edge meets the corner. EXTENT is how far along the edge the curve
+// reaches, PULL how close its handles sit to the corner point.
+const CORNER_EXTENT = 1.4;
+const CORNER_PULL = 0.36;
+
+function squirclePath(ctx, x, y, width, height, radius) {
+  const k = Math.min(radius * CORNER_EXTENT, width / 2, height / 2);
+
+  if (k <= 0) {
+    ctx.rect(x, y, width, height);
+    return;
+  }
+
+  const t = k * CORNER_PULL;
+  const right = x + width;
+  const bottom = y + height;
+
+  ctx.moveTo(x + k, y);
+  ctx.lineTo(right - k, y);
+  ctx.bezierCurveTo(right - t, y, right, y + t, right, y + k);
+  ctx.lineTo(right, bottom - k);
+  ctx.bezierCurveTo(right, bottom - t, right - t, bottom, right - k, bottom);
+  ctx.lineTo(x + k, bottom);
+  ctx.bezierCurveTo(x + t, bottom, x, bottom - t, x, bottom - k);
+  ctx.lineTo(x, y + k);
+  ctx.bezierCurveTo(x, y + t, x + t, y, x + k, y);
+  ctx.closePath();
+}
+
 function paintBackground(width, height) {
   const image = settings.mode === "image" ? selectedImage()?.bitmap : null;
 
@@ -515,7 +546,7 @@ function render() {
     composedContext.shadowBlur = Math.max(12, inset * 1.1 * strength);
     composedContext.shadowOffsetY = Math.max(3, inset * 0.35 * strength);
     composedContext.beginPath();
-    composedContext.roundRect(inset, inset, shot.width, shot.height, radius);
+    squirclePath(composedContext, inset, inset, shot.width, shot.height, radius);
     composedContext.fillStyle = "#000";
     composedContext.fill();
     composedContext.restore();
@@ -523,7 +554,7 @@ function render() {
 
   composedContext.save();
   composedContext.beginPath();
-  composedContext.roundRect(inset, inset, shot.width, shot.height, radius);
+  squirclePath(composedContext, inset, inset, shot.width, shot.height, radius);
   composedContext.clip();
   composedContext.drawImage(shot, inset, inset);
   composedContext.restore();
@@ -535,7 +566,8 @@ function render() {
     composedContext.strokeStyle = settings.borderColor;
     composedContext.lineWidth = lineWidth;
     composedContext.beginPath();
-    composedContext.roundRect(
+    squirclePath(
+      composedContext,
       inset + lineWidth / 2,
       inset + lineWidth / 2,
       Math.max(0, shot.width - lineWidth),

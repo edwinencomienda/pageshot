@@ -16,7 +16,7 @@ and JavaScript.
 Works in any Chrome-based browser: Chrome, Edge, Brave, Arc, Vivaldi, Opera.
 
 1. Download this project:
-   `git clone https://github.com/edwinencomienda/chrome-fullpage-screenshot.git`
+   `git clone https://github.com/edwinencomienda/pageshot.git`
    (or click **Code → Download ZIP** on GitHub and unzip it)
 2. Open `chrome://extensions` in your browser.
 3. Turn on **Developer mode** (top-right toggle).
@@ -49,7 +49,8 @@ background behind it:
   **Add image** — as many of each as you like. They stay in the sidebar for next time; hover one and click **×**
   to delete it.
 - **Padding** — how much background shows around the shot.
-- **Corners** — rounds the screenshot's edges.
+- **Corners** — rounds the screenshot's edges, using a squircle (the smooth
+  Figma/iOS corner) rather than a plain arc.
 - **Shadow** — slide from off to strong.
 - **Border** — off by default. Switch it on, then pick the color and thickness.
 - **Crop** — drag a box on the image to keep just that part, background and all,

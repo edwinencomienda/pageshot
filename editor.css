@@ -576,6 +576,18 @@ input[type="range"]:focus-visible {
   padding-top: 4px;
 }
 
+/* Copy and Download stay in reach while the rest of the panel scrolls. */
+.actions-top {
+  position: sticky;
+  top: -26px;
+  z-index: 1;
+  padding-top: 26px;
+  padding-bottom: 12px;
+  margin-top: -26px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+
 .actions button {
   display: flex;
   align-items: center;
