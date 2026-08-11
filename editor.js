@@ -8,7 +8,13 @@ const marquee = document.querySelector("#marquee");
 const emptyState = document.querySelector("#empty");
 const dimensions = document.querySelector("#dimensions");
 const statusText = document.querySelector("#status");
-const backgroundList = document.querySelector("#backgrounds");
+const solidList = document.querySelector("#solids");
+const gradientList = document.querySelector("#gradients");
+const borderToggle = document.querySelector("#border");
+const borderColorInput = document.querySelector("#border-color");
+const borderColorLabel = document.querySelector("#border-color-label");
+const borderWidthInput = document.querySelector("#border-width");
+const borderWidthValue = document.querySelector("#border-width-value");
 const paddingInput = document.querySelector("#padding");
 const radiusInput = document.querySelector("#radius");
 const shadowInput = document.querySelector("#shadow");
@@ -18,24 +24,55 @@ const shadowValue = document.querySelector("#shadow-value");
 const cropValue = document.querySelector("#crop-value");
 const cropReset = document.querySelector("#crop-reset");
 const colorInput = document.querySelector("#color");
-const colorLabel = document.querySelector("#color-label");
-const colorRemove = document.querySelector("#color-remove");
+const colorList = document.querySelector("#colors");
+const colorsSub = document.querySelector("#colors-sub");
 const uploadInput = document.querySelector("#upload");
-const uploadLabel = document.querySelector("#upload-label");
-const uploadRemove = document.querySelector("#upload-remove");
+const imageList = document.querySelector("#images");
+const imagesSub = document.querySelector("#images-sub");
 const undoButton = document.querySelector("#undo");
 const redoButton = document.querySelector("#redo");
+const resetButton = document.querySelector("#reset");
 const copyButton = document.querySelector("#copy");
 const downloadButton = document.querySelector("#download");
 
-// `css` mirrors the canvas fill so each swatch previews what it draws.
-const BACKGROUNDS = [
-  { id: "paper", label: "Paper", css: "#f4f0e6", color: "#f4f0e6" },
-  { id: "ink", label: "Ink", css: "#17211b", color: "#17211b" },
-  { id: "acid", label: "Acid", css: "linear-gradient(135deg, #eaffa0, #a8d900)", gradient: ["#eaffa0", "#a8d900"] },
-  { id: "clay", label: "Clay", css: "linear-gradient(135deg, #f0dccb, #c49a7f)", gradient: ["#f0dccb", "#c49a7f"] },
-  { id: "slate", label: "Slate", css: "linear-gradient(135deg, #4a5b64, #1d262b)", gradient: ["#4a5b64", "#1d262b"] },
+const SOLIDS = [
+  { id: "paper", label: "Paper", color: "#f4f0e6" },
+  { id: "ink", label: "Ink", color: "#17211b" },
+  { id: "white", label: "White", color: "#ffffff" },
+  { id: "black", label: "Black", color: "#000000" },
+  { id: "ash", label: "Ash", color: "#8e948d" },
+  { id: "sand", label: "Sand", color: "#e3cfa9" },
+  { id: "terracotta", label: "Terracotta", color: "#c1674a" },
+  { id: "olive", label: "Olive", color: "#5c6b3c" },
+  { id: "forest", label: "Forest", color: "#1d3b2a" },
+  { id: "teal", label: "Teal", color: "#1f6f6b" },
+  { id: "navy", label: "Navy", color: "#1e2f56" },
+  { id: "plum", label: "Plum", color: "#5b2f4a" },
+  { id: "wine", label: "Wine", color: "#7a2233" },
+  { id: "lime", label: "Lime", color: "#d9ff57" },
+  { id: "butter", label: "Butter", color: "#f2d06b" },
 ];
+
+const GRADIENTS = [
+  { id: "acid", label: "Acid", gradient: ["#eaffa0", "#a8d900"] },
+  { id: "clay", label: "Clay", gradient: ["#f0dccb", "#c49a7f"] },
+  { id: "slate", label: "Slate", gradient: ["#4a5b64", "#1d262b"] },
+  { id: "dusk", label: "Dusk", gradient: ["#2f3a5c", "#7d5a6b"] },
+  { id: "ember", label: "Ember", gradient: ["#f7c05b", "#c0392b"] },
+  { id: "ocean", label: "Ocean", gradient: ["#7fd4d0", "#1b4b6b"] },
+  { id: "orchid", label: "Orchid", gradient: ["#f3c4e0", "#6a3d7a"] },
+  { id: "moss", label: "Moss", gradient: ["#cfe0a8", "#3f5a2f"] },
+  { id: "peach", label: "Peach", gradient: ["#ffd9c0", "#e8746b"] },
+  { id: "midnight", label: "Midnight", gradient: ["#3a3f5c", "#0d0f1a"] },
+];
+
+// `css` mirrors the canvas fill so each swatch previews what it draws.
+const BACKGROUNDS = [...SOLIDS, ...GRADIENTS].map((background) => ({
+  ...background,
+  css: background.gradient
+    ? `linear-gradient(135deg, ${background.gradient[0]}, ${background.gradient[1]})`
+    : background.color,
+}));
 
 const FULL_CROP = { x: 0, y: 0, width: 1, height: 1 };
 
@@ -49,11 +86,103 @@ const settings = {
   radius: Number(radiusInput.value),
   shadow: Number(shadowInput.value),
   crop: { ...FULL_CROP },
+  border: false,
+  borderColor: borderColorInput.value,
+  borderWidth: Number(borderWidthInput.value),
+  imageId: null,
 };
 
+// Captured before any saved preferences load, so Reset always has somewhere to go.
+const DEFAULTS = structuredClone(settings);
+
 let shot = null;
-let backgroundImage = null;
 let filename = "screenshot.png";
+
+// Uploaded backgrounds: { id, name, blob, bitmap, url }. The url feeds the
+// thumbnail, the bitmap feeds the canvas.
+let images = [];
+
+function selectedImage() {
+  return images.find((image) => image.id === settings.imageId) ?? null;
+}
+
+// Custom solid colors the user has added, kept as plain hex strings.
+let customColors = [];
+
+function saveCustomColors() {
+  localStorage.setItem("editor-colors", JSON.stringify(customColors));
+}
+
+function loadCustomColors() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("editor-colors") ?? "[]");
+    customColors = Array.isArray(saved) ? saved.filter((value) => /^#[0-9a-f]{6}$/i.test(value)) : [];
+  } catch {
+    customColors = [];
+  }
+}
+
+function buildColorSwatches() {
+  colorList.textContent = "";
+  colorsSub.hidden = customColors.length === 0;
+
+  customColors.forEach((value) => {
+    const label = document.createElement("label");
+    label.className = "swatch";
+    label.title = value.toUpperCase();
+    label.style.background = value;
+
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "background";
+    input.value = value;
+    input.checked = settings.mode === "color" && settings.color === value;
+    input.setAttribute("aria-label", value);
+    input.addEventListener("change", () => {
+      settings.mode = "color";
+      settings.color = value;
+      commit();
+    });
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "swatch-remove";
+    remove.title = `Remove ${value}`;
+    remove.setAttribute("aria-label", `Remove ${value}`);
+    remove.textContent = "×";
+    remove.addEventListener("click", (event) => {
+      event.preventDefault();
+      removeCustomColor(value);
+    });
+
+    label.append(input, remove);
+    colorList.append(label);
+  });
+}
+
+function addCustomColor(value) {
+  if (!customColors.includes(value)) customColors = [...customColors, value];
+  saveCustomColors();
+  settings.mode = "color";
+  settings.color = value;
+  buildColorSwatches();
+  commit();
+  setStatus("Color added");
+}
+
+function removeCustomColor(value) {
+  customColors = customColors.filter((item) => item !== value);
+  saveCustomColors();
+
+  if (settings.mode === "color" && settings.color === value) {
+    settings.color = customColors[0] ?? settings.color;
+    if (!customColors.length) settings.mode = "preset";
+  }
+
+  buildColorSwatches();
+  commit();
+  setStatus("Color removed");
+}
 
 // ⌘ on a Mac, Ctrl everywhere else. The handler accepts either key.
 const IS_MAC = /mac/i.test(navigator.userAgentData?.platform ?? navigator.platform);
@@ -98,7 +227,7 @@ function applyHistory(step) {
 
   history.index = next;
   Object.assign(settings, JSON.parse(history.entries[next]));
-  if (settings.mode === "image" && !backgroundImage) settings.mode = "preset";
+  if (settings.mode === "image" && !selectedImage()) settings.mode = "preset";
   syncHistoryButtons();
   syncControls();
   savePreferences();
@@ -157,27 +286,25 @@ function syncControls() {
     : "Whole image";
   cropReset.disabled = !isCropped();
 
-  colorInput.value = settings.color;
-  const usingColor = settings.mode === "color";
-  colorLabel.textContent = usingColor ? settings.color.toUpperCase() : "Custom color";
-  colorLabel.parentElement.classList.toggle("active", usingColor);
-  colorLabel.parentElement.style.background = usingColor ? settings.color : "";
-  colorLabel.style.color = usingColor ? readableInk(settings.color) : "";
-  colorRemove.hidden = !usingColor;
+  borderToggle.checked = settings.border;
+  borderColorInput.value = settings.borderColor;
+  borderWidthInput.value = settings.borderWidth;
+  borderWidthValue.textContent = `${settings.borderWidth}px`;
+  borderColorLabel.textContent = settings.borderColor.toUpperCase();
+  borderColorLabel.parentElement.style.background = settings.borderColor;
+  borderColorLabel.style.color = readableInk(settings.borderColor);
 
-  uploadLabel.parentElement.classList.toggle(
-    "active",
-    settings.mode === "image" && Boolean(backgroundImage),
-  );
-  uploadRemove.hidden = !backgroundImage;
+  colorInput.value = settings.color;
 
   document.querySelectorAll('input[name="background"]').forEach((input) => {
-    input.checked = settings.mode === "preset" && input.value === settings.preset;
+    if (settings.mode === "image") input.checked = input.value === settings.imageId;
+    else if (settings.mode === "color") input.checked = input.value === settings.color;
+    else input.checked = input.value === settings.preset;
   });
 }
 
-function buildSwatches() {
-  BACKGROUNDS.forEach((background) => {
+function buildSwatches(backgrounds, container) {
+  backgrounds.forEach((background) => {
     const label = document.createElement("label");
     label.className = "swatch";
     label.title = background.label;
@@ -195,8 +322,106 @@ function buildSwatches() {
     });
 
     label.append(input);
-    backgroundList.append(label);
+    container.append(label);
   });
+}
+
+function buildImageSwatches() {
+  imageList.textContent = "";
+  imagesSub.hidden = images.length === 0;
+
+  images.forEach((image) => {
+    const label = document.createElement("label");
+    label.className = "swatch";
+    label.title = image.name;
+
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "background";
+    input.value = image.id;
+    input.checked = settings.mode === "image" && settings.imageId === image.id;
+    input.setAttribute("aria-label", image.name);
+    input.addEventListener("change", () => {
+      settings.mode = "image";
+      settings.imageId = image.id;
+      commit();
+    });
+
+    const thumb = document.createElement("img");
+    thumb.className = "thumb";
+    thumb.src = image.url;
+    thumb.alt = "";
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "swatch-remove";
+    remove.title = `Remove ${image.name}`;
+    remove.setAttribute("aria-label", `Remove ${image.name}`);
+    remove.textContent = "×";
+    remove.addEventListener("click", (event) => {
+      event.preventDefault();
+      removeImage(image.id);
+    });
+
+    label.append(input, thumb, remove);
+    imageList.append(label);
+  });
+}
+
+async function persistImages() {
+  await shotStore
+    .saveBackgrounds(images.map(({ id, name, blob }) => ({ id, name, blob })))
+    .catch(() => setStatus("Could not save that image", "error"));
+}
+
+async function addImages(files) {
+  const added = [];
+
+  for (const file of files) {
+    try {
+      added.push({
+        // Unique enough for a list the user curates by hand.
+        id: `${file.name}-${file.size}-${images.length + added.length}`,
+        name: file.name,
+        blob: file,
+        bitmap: await createImageBitmap(file),
+        url: URL.createObjectURL(file),
+      });
+    } catch (error) {
+      console.error(error);
+      setStatus(`Could not read ${file.name}`, "error");
+    }
+  }
+
+  if (!added.length) return;
+
+  images = [...images, ...added];
+  settings.mode = "image";
+  settings.imageId = added[added.length - 1].id;
+  await persistImages();
+  buildImageSwatches();
+  commit();
+  setStatus(added.length > 1 ? `${added.length} images added` : "Image added");
+}
+
+async function removeImage(id) {
+  const image = images.find((item) => item.id === id);
+  if (!image) return;
+
+  image.bitmap?.close();
+  URL.revokeObjectURL(image.url);
+  images = images.filter((item) => item.id !== id);
+
+  if (settings.imageId === id) {
+    // Fall back to another upload if there is one, otherwise to the presets.
+    settings.imageId = images[0]?.id ?? null;
+    if (!settings.imageId && settings.mode === "image") settings.mode = "preset";
+  }
+
+  await persistImages();
+  buildImageSwatches();
+  commit();
+  setStatus("Image removed");
 }
 
 // Every user-visible change funnels through here so history stays honest.
@@ -210,13 +435,15 @@ function commit() {
 /* ---------- drawing ---------- */
 
 function paintBackground(width, height) {
-  if (settings.mode === "image" && backgroundImage) {
+  const image = settings.mode === "image" ? selectedImage()?.bitmap : null;
+
+  if (image) {
     // Cover the frame without squashing the uploaded image.
-    const scale = Math.max(width / backgroundImage.width, height / backgroundImage.height);
-    const drawWidth = backgroundImage.width * scale;
-    const drawHeight = backgroundImage.height * scale;
+    const scale = Math.max(width / image.width, height / image.height);
+    const drawWidth = image.width * scale;
+    const drawHeight = image.height * scale;
     composedContext.drawImage(
-      backgroundImage,
+      image,
       (width - drawWidth) / 2,
       (height - drawHeight) / 2,
       drawWidth,
@@ -280,6 +507,24 @@ function render() {
   composedContext.clip();
   composedContext.drawImage(shot, inset, inset);
   composedContext.restore();
+
+  // Drawn just inside the screenshot's edge so it never changes the frame size.
+  if (settings.border && settings.borderWidth > 0) {
+    const lineWidth = settings.borderWidth * scale;
+    composedContext.save();
+    composedContext.strokeStyle = settings.borderColor;
+    composedContext.lineWidth = lineWidth;
+    composedContext.beginPath();
+    composedContext.roundRect(
+      inset + lineWidth / 2,
+      inset + lineWidth / 2,
+      Math.max(0, shot.width - lineWidth),
+      Math.max(0, shot.height - lineWidth),
+      Math.max(0, radius - lineWidth / 2),
+    );
+    composedContext.stroke();
+    composedContext.restore();
+  }
 
   // The crop takes background and screenshot together, whatever it covers.
   const sourceX = Math.round(settings.crop.x * width);
@@ -432,6 +677,26 @@ wireSlider(paddingInput, "padding");
 wireSlider(radiusInput, "radius");
 wireSlider(shadowInput, "shadow");
 
+borderToggle.addEventListener("change", () => {
+  settings.border = borderToggle.checked;
+  commit();
+  setStatus(settings.border ? "Border on" : "Border off");
+});
+
+borderColorInput.addEventListener("input", () => {
+  settings.borderColor = borderColorInput.value;
+  syncControls();
+  render();
+});
+
+borderColorInput.addEventListener("change", () => {
+  settings.borderColor = borderColorInput.value;
+  commit();
+});
+
+wireSlider(borderWidthInput, "borderWidth");
+
+// Live preview while dragging the picker; the color joins the list on release.
 colorInput.addEventListener("input", () => {
   settings.mode = "color";
   settings.color = colorInput.value;
@@ -439,47 +704,19 @@ colorInput.addEventListener("input", () => {
   render();
 });
 
-colorInput.addEventListener("change", () => {
-  settings.mode = "color";
-  settings.color = colorInput.value;
-  commit();
-  setStatus("Custom color added");
-});
-
-colorRemove.addEventListener("click", () => {
-  settings.mode = "preset";
-  commit();
-  setStatus("Custom color removed");
-});
+colorInput.addEventListener("change", () => addCustomColor(colorInput.value));
 
 uploadInput.addEventListener("change", async () => {
-  const file = uploadInput.files?.[0];
-  if (!file) return;
-
-  try {
-    const nextImage = await createImageBitmap(file);
-    backgroundImage?.close();
-    backgroundImage = nextImage;
-    settings.mode = "image";
-    uploadLabel.textContent = file.name;
-    await shotStore.saveBackground(file, file.name);
-    commit();
-    setStatus("Background image added");
-  } catch (error) {
-    console.error(error);
-    setStatus("That image could not be read", "error");
-  }
+  const files = [...(uploadInput.files ?? [])];
+  uploadInput.value = "";
+  if (files.length) await addImages(files);
 });
 
-uploadRemove.addEventListener("click", async () => {
-  backgroundImage?.close();
-  backgroundImage = null;
-  uploadInput.value = "";
-  uploadLabel.textContent = "Use my own image";
-  if (settings.mode === "image") settings.mode = "preset";
-  await shotStore.clearBackground().catch(() => {});
+// Undoable, and it leaves any uploaded image in place — just unselected.
+resetButton.addEventListener("click", () => {
+  Object.assign(settings, structuredClone(DEFAULTS));
   commit();
-  setStatus("Background image removed");
+  setStatus("Back to defaults");
 });
 
 undoButton.addEventListener("click", () => applyHistory(-1));
@@ -516,16 +753,22 @@ downloadButton.addEventListener("click", downloadImage);
 
 async function load() {
   loadPreferences();
+  loadCustomColors();
+  buildColorSwatches();
   labelShortcuts();
-  buildSwatches();
+  buildSwatches(BACKGROUNDS.filter((item) => !item.gradient), solidList);
+  buildSwatches(BACKGROUNDS.filter((item) => item.gradient), gradientList);
 
-  const savedBackground = await shotStore.loadBackground().catch(() => null);
-  if (savedBackground?.blob) {
-    backgroundImage = await createImageBitmap(savedBackground.blob).catch(() => null);
-    if (backgroundImage) uploadLabel.textContent = savedBackground.name || "My image";
+  const saved = await shotStore.loadBackgrounds().catch(() => []);
+  for (const record of saved) {
+    const bitmap = await createImageBitmap(record.blob).catch(() => null);
+    if (!bitmap) continue;
+    images.push({ ...record, bitmap, url: URL.createObjectURL(record.blob) });
   }
-  // The saved image may be gone; fall back rather than painting nothing.
-  if (settings.mode === "image" && !backgroundImage) settings.mode = "preset";
+  buildImageSwatches();
+
+  // A saved image may be gone; fall back rather than painting nothing.
+  if (settings.mode === "image" && !selectedImage()) settings.mode = "preset";
 
   syncControls();
   pushHistory();

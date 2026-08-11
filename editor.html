@@ -35,27 +35,26 @@
       <aside class="panel">
         <fieldset>
           <legend>Background</legend>
-          <div id="backgrounds" class="swatches" role="radiogroup" aria-label="Background"></div>
+          <p class="sub">Solid</p>
+          <div id="solids" class="swatches" role="radiogroup" aria-label="Solid backgrounds"></div>
+          <p class="sub">Gradient</p>
+          <div id="gradients" class="swatches" role="radiogroup" aria-label="Gradient backgrounds"></div>
 
-          <div class="custom-row">
-            <label class="custom-color">
-              <input id="color" type="color" value="#1d3b2a" />
-              <span id="color-label">Custom color</span>
-            </label>
-            <button id="color-remove" class="remove" type="button" title="Remove custom color" hidden>
-              ×
-            </button>
-          </div>
+          <p class="sub" id="colors-sub" hidden>My colors</p>
+          <div id="colors" class="swatches" role="radiogroup" aria-label="My colors"></div>
 
-          <div class="custom-row">
-            <label class="upload">
-              <input id="upload" type="file" accept="image/*" />
-              <span id="upload-label">Use my own image</span>
-            </label>
-            <button id="upload-remove" class="remove" type="button" title="Remove image" hidden>
-              ×
-            </button>
-          </div>
+          <label class="custom-color">
+            <input id="color" type="color" value="#1d3b2a" />
+            <span>Add solid color</span>
+          </label>
+
+          <p class="sub" id="images-sub" hidden>My images</p>
+          <div id="images" class="swatches" role="radiogroup" aria-label="My images"></div>
+
+          <label class="upload">
+            <input id="upload" type="file" accept="image/*" multiple />
+            <span>Add image</span>
+          </label>
         </fieldset>
 
         <fieldset>
@@ -74,6 +73,26 @@
         </fieldset>
 
         <fieldset>
+          <legend>
+            Border
+            <label class="switch">
+              <input id="border" type="checkbox" role="switch" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </legend>
+          <div class="custom-row">
+            <label class="custom-color">
+              <input id="border-color" type="color" value="#17211b" />
+              <span id="border-color-label">Color</span>
+            </label>
+          </div>
+          <label class="slider-row">
+            <span>Thickness <output id="border-width-value"></output></span>
+            <input id="border-width" type="range" min="1" max="24" step="1" value="4" />
+          </label>
+        </fieldset>
+
+        <fieldset>
           <legend>Crop <output id="crop-value"></output></legend>
           <p class="hint">Drag on the image to keep just that part.</p>
           <button id="crop-reset" class="secondary-button" type="button" disabled>
@@ -82,6 +101,9 @@
         </fieldset>
 
         <div class="actions">
+          <button id="reset" class="secondary-button" type="button">
+            Reset to defaults
+          </button>
           <button id="copy" type="button">
             Copy image <kbd data-key="C"></kbd>
           </button>

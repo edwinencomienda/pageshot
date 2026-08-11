@@ -41,12 +41,14 @@ Flip on **Open in editor** in the popup before capturing. Instead of copying or
 downloading right away, the screenshot opens in a new tab where you can put a
 background behind it:
 
-- **Background** — five presets, any custom color you pick, or your own image.
-  The color and image are remembered for next time, and the **×** next to each
-  removes it.
+- **Background** — 15 solid colors and 10 gradients built in. Add your own solid
+  colors with the picker and your own images with **Add image** — as many of each
+  as you like. They stay in the sidebar for next time; hover one and click **×**
+  to delete it.
 - **Padding** — how much background shows around the shot.
 - **Corners** — rounds the screenshot's edges.
 - **Shadow** — slide from off to strong.
+- **Border** — off by default. Switch it on, then pick the color and thickness.
 - **Crop** — drag a box on the image to keep just that part, background and all,
   so you can save only the top, the top-left corner, and so on. **Show whole
   image** puts it back.

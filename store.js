@@ -29,7 +29,7 @@ async function runShotTransaction(mode, run) {
   }
 }
 
-const BACKGROUND_KEY = "background";
+const BACKGROUNDS_KEY = "backgrounds";
 
 const shotStore = {
   save: (blob, meta = {}) =>
@@ -38,13 +38,13 @@ const shotStore = {
     ),
   load: () => runShotTransaction("readonly", (store) => store.get(SHOT_KEY)),
 
-  // The chosen background image is kept so it is still there next capture.
-  saveBackground: (blob, name = "") =>
-    runShotTransaction("readwrite", (store) =>
-      store.put({ blob, name }, BACKGROUND_KEY),
-    ),
-  loadBackground: () =>
-    runShotTransaction("readonly", (store) => store.get(BACKGROUND_KEY)),
-  clearBackground: () =>
-    runShotTransaction("readwrite", (store) => store.delete(BACKGROUND_KEY)),
+  // Background images are kept as a list so they are still there next capture.
+  saveBackgrounds: (images) =>
+    runShotTransaction("readwrite", (store) => store.put(images, BACKGROUNDS_KEY)),
+  loadBackgrounds: async () => {
+    const images = await runShotTransaction("readonly", (store) =>
+      store.get(BACKGROUNDS_KEY),
+    );
+    return Array.isArray(images) ? images : [];
+  },
 };

@@ -11,9 +11,13 @@
   box-sizing: border-box;
 }
 
+/* The app fills the window and never scrolls as a whole; the panel scrolls. */
 body {
+  display: grid;
+  height: 100vh;
   margin: 0;
-  min-height: 100vh;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
   color: var(--ink);
   background: var(--paper);
   font-family: "Avenir Next", Avenir, "Century Gothic", sans-serif;
@@ -21,15 +25,15 @@ body {
 
 header {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 22px 28px 18px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--line);
 }
 
 .viewfinder {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   align-self: center;
   border: 1.5px solid currentColor;
   background: linear-gradient(var(--ink), var(--ink)) center / 4px 4px no-repeat;
@@ -38,9 +42,9 @@ header {
 h1 {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 26px;
+  font-size: 17px;
   font-weight: 400;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 
 h1 em {
@@ -67,8 +71,8 @@ h1 em::after {
 }
 
 .history button {
-  width: 26px;
-  min-height: 26px;
+  width: 24px;
+  min-height: 24px;
   padding: 0;
   border: 1px solid var(--line);
   color: var(--ink);
@@ -93,27 +97,31 @@ h1 em::after {
 
 main {
   display: grid;
-  align-items: start;
-  grid-template-columns: minmax(0, 1fr) 236px;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) 244px;
 }
 
-/* Dark stage so any background choice reads clearly against it. */
+/* A shade darker than the sidebar, so the frame reads without shouting. */
 .stage {
   display: grid;
-  min-height: calc(100vh - 61px);
+  min-height: 0;
   padding: 28px;
   place-items: center;
-  background: #202924;
+  overflow: auto;
+  background: #e3ded0;
 }
 
 .frame {
   position: relative;
+  display: flex;
+  max-width: 100%;
+  max-height: 100%;
   line-height: 0;
 }
 
 canvas {
   max-width: 100%;
-  max-height: calc(100vh - 120px);
+  max-height: 100%;
   cursor: crosshair;
 }
 
@@ -135,7 +143,7 @@ canvas {
 
 .empty {
   max-width: 260px;
-  color: var(--paper);
+  color: var(--ink);
   text-align: center;
 }
 
@@ -147,7 +155,7 @@ canvas {
 
 .empty-hint {
   margin-top: 10px !important;
-  color: rgba(244, 240, 230, 0.6);
+  color: var(--muted);
   font-family: inherit !important;
   font-size: 12px !important;
   line-height: 1.6;
@@ -156,13 +164,21 @@ canvas {
 .panel {
   display: grid;
   gap: 18px;
+  align-content: start;
+  /* minmax(0,...) plus min-width on fieldsets stops sideways overflow. */
+  grid-template-columns: minmax(0, 1fr);
+  overflow-x: hidden;
   padding: 26px 24px;
   border-left: 1px solid var(--line);
   position: sticky;
   top: 0;
+  /* The controls outgrow short windows, so the panel scrolls on its own. */
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 fieldset {
+  min-width: 0;
   margin: 0;
   padding: 0;
   border: 0;
@@ -185,10 +201,97 @@ output {
   font-variant-numeric: tabular-nums;
 }
 
+.sub {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sub + .swatches {
+  margin-bottom: 12px;
+}
+
 .swatches {
   display: grid;
-  gap: 6px;
+  gap: 5px;
   grid-template-columns: repeat(5, 1fr);
+}
+
+/* Toggle switch, matching the popup's. */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.switch-track {
+  position: relative;
+  display: block;
+  width: 30px;
+  height: 17px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: rgba(23, 33, 27, 0.08);
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.switch-track::after {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--ink);
+  content: "";
+  transition: transform 160ms ease;
+}
+
+.switch:has(input:checked) .switch-track {
+  border-color: var(--ink);
+  background: var(--acid);
+}
+
+.switch:has(input:checked) .switch-track::after {
+  transform: translateX(13px);
+}
+
+.switch:has(input:focus-visible) .switch-track {
+  outline: 2px solid #6b8f00;
+  outline-offset: 2px;
+}
+
+.slider-row {
+  display: grid;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.slider-row > span {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Dimmed until the border is switched on. */
+fieldset:has(#border:not(:checked)) .custom-row,
+fieldset:has(#border:not(:checked)) .slider-row {
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .swatch {
@@ -316,17 +419,50 @@ input[type="range"] {
   color: var(--ink);
 }
 
-.upload.active {
-  border-style: solid;
-  border-color: var(--ink);
-  color: var(--ink);
-  background: var(--acid);
-  padding: 0 8px;
+.upload > span {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  display: block;
-  line-height: 30px;
+}
+
+/* Uploaded images sit in the same swatch grid, each with its own preview. */
+#images:empty {
+  display: none;
+}
+
+.swatch .thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.swatch-remove {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  display: grid;
+  width: 14px;
+  min-height: 14px;
+  height: 14px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 2px;
+  color: var(--paper);
+  background: rgba(23, 33, 27, 0.72);
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.swatch:hover .swatch-remove,
+.swatch-remove:focus-visible {
+  opacity: 1;
+}
+
+.swatch-remove:hover {
+  background: #c83d2f;
 }
 
 .upload input {
@@ -415,6 +551,8 @@ button:disabled {
 
   .panel {
     position: static;
+    max-height: none;
+    overflow: visible;
     border-left: 0;
     border-top: 1px solid var(--line);
   }
