@@ -2,7 +2,9 @@
 // IndexedDB, not chrome.storage, because full-page PNGs blow past the 10 MB quota.
 const SHOT_DB = "full-page-screenshot";
 const SHOT_STORE = "shots";
-const SHOT_KEY = "latest";
+// Shots are keyed by their id so several editor tabs can hold one each.
+const LEGACY_SHOT_KEY = "latest";
+const SHOT_TTL = 24 * 60 * 60 * 1000;
 
 function openShotDb() {
   return new Promise((resolve, reject) => {
@@ -32,11 +34,28 @@ async function runShotTransaction(mode, run) {
 const BACKGROUNDS_KEY = "backgrounds";
 
 const shotStore = {
-  save: (blob, meta = {}) =>
-    runShotTransaction("readwrite", (store) =>
-      store.put({ blob, ...meta }, SHOT_KEY),
+  save: async (blob, meta = {}) => {
+    const id = meta.id ?? `${Date.now()}`;
+    await runShotTransaction("readwrite", (store) => {
+      // Yesterday's shots are of no use to anyone; stop them piling up.
+      const cutoff = Date.now() - SHOT_TTL;
+      store.getAllKeys().onsuccess = (event) => {
+        for (const key of event.target.result) {
+          if (key === BACKGROUNDS_KEY) continue;
+          const stamp = Number(key);
+          if (key === LEGACY_SHOT_KEY || (Number.isFinite(stamp) && stamp < cutoff)) {
+            store.delete(key);
+          }
+        }
+      };
+      return store.put({ blob, ...meta, id }, id);
+    });
+    return id;
+  },
+  load: (id) =>
+    runShotTransaction("readonly", (store) =>
+      store.get(id ?? LEGACY_SHOT_KEY),
     ),
-  load: () => runShotTransaction("readonly", (store) => store.get(SHOT_KEY)),
 
   // Background images are kept as a list so they are still there next capture.
   saveBackgrounds: (images) =>

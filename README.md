@@ -41,9 +41,10 @@ status line tells you how far along it is, and **Stop** ends it early.
 
 ### Add a background
 
-Flip on **Open in editor** in the popup before capturing. Instead of copying or
-downloading right away, the screenshot opens in a new tab where you can put a
-background behind it:
+Flip on **Open in editor** in the popup before capturing. Instead of copying
+right away, the screenshot opens in a new tab where you can put a background
+behind it — every capture gets its own tab, so you can dress up several side by
+side:
 
 - **Background** — a transparent option, 15 solid colors and 10 gradients built
   in. Transparent keeps the PNG's alpha, so the padding around the shot stays
@@ -100,8 +101,11 @@ it finishes.
 
 The editor is a second extension page (`editor.html`). The captured PNG is
 handed over through IndexedDB (`store.js`) rather than the URL, because
-full-page PNGs are far too big for either a URL or `chrome.storage`. The editor
-redraws the background and screenshot onto its own canvas.
+full-page PNGs are far too big for either a URL or `chrome.storage`. Each
+capture is stored under its own id — the editor tab's URL says which one to
+load, so several editors can be open at once — and day-old shots are cleaned
+out on the next capture. The editor redraws the background and screenshot onto
+its own canvas.
 
 | File | Job |
 | --- | --- |

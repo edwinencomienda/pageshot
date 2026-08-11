@@ -161,27 +161,16 @@ async function copyPng(blob) {
 
 async function openInEditor(blob, tab, captureType) {
   setStatus("Opening editor");
-  await shotStore.save(blob, {
+  const id = await shotStore.save(blob, {
     filename: safeFilename(tab.url, captureType),
     id: `${Date.now()}`,
   });
 
-  // Reuse one editor tab so an older capture is never left sitting in another.
-  const url = chrome.runtime.getURL("editor.html");
-  const knownTabId = Number(localStorage.getItem("editor-tab-id"));
-
-  if (knownTabId) {
-    try {
-      // Setting the url reloads the tab, so it picks up the new capture.
-      await chrome.tabs.update(knownTabId, { url, active: true });
-      return;
-    } catch {
-      // The tab was closed since last time; fall through and open a new one.
-    }
-  }
-
-  const editorTab = await chrome.tabs.create({ url });
-  localStorage.setItem("editor-tab-id", String(editorTab.id));
+  // Every capture gets its own editor tab, addressed by the shot id in the
+  // URL, so several can be dressed up side by side.
+  await chrome.tabs.create({
+    url: chrome.runtime.getURL(`editor.html?shot=${id}`),
+  });
 }
 
 async function saveOutput(blob, tab, captureType) {

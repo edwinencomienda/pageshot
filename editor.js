@@ -1028,7 +1028,8 @@ async function load() {
   syncControls();
   pushHistory();
 
-  const record = await shotStore.load().catch(() => null);
+  const shotId = new URLSearchParams(location.search).get("shot");
+  const record = await shotStore.load(shotId).catch(() => null);
 
   if (!record?.blob) {
     frame.hidden = true;
@@ -1044,9 +1045,11 @@ async function load() {
   // A crop belongs to the shot it was drawn on, so a new capture starts whole.
   // A picked preset also starts fresh from its saved look, dropping whatever
   // was tweaked on the last shot; with none picked, the settings carry over.
-  const lastShotId = localStorage.getItem("editor-shot-id");
+  // sessionStorage is per-tab, so refreshing one of several editors does not
+  // mistake its own shot for a new one.
+  const lastShotId = sessionStorage.getItem("editor-shot-id");
   if (record.id && record.id !== lastShotId) {
-    localStorage.setItem("editor-shot-id", record.id);
+    sessionStorage.setItem("editor-shot-id", record.id);
 
     const preset = presets.find((item) => item.name === presetPicker.value);
     if (preset) {
