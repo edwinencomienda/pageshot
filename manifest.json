@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "Capture webpages as PNGs and download or copy them to the clipboard.",
   "permissions": ["activeTab", "downloads", "scripting", "clipboardWrite"],
+  "incognito": "split",
   "background": {
     "service_worker": "background.js"
   },

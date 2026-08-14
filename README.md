@@ -115,6 +115,11 @@ one your computer uses.
 `chrome://extensions` and the Chrome Web Store. Extremely tall pages may exceed
 the browser's maximum image size.
 
+**Incognito:** enable **Allow in Incognito** on the extension card first. The
+editor then opens inside the incognito window, and its captures live only in
+that session — closing the window discards them, along with any presets or
+custom colors saved from there. Your normal-window presets stay untouched.
+
 ## How it works
 
 `popup.js` scrolls the page one screen at a time, snaps each screen with
