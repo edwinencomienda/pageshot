@@ -72,7 +72,7 @@ side:
   **Add image** — as many of each as you like. They stay in the sidebar for next time; hover one and click **×**
   to delete it.
 - **Pattern** — dots, grid, stripes, hatch, checker, crosses, waves, zigzag,
-  bricks, rings or triangles, drawn faintly on top of whichever background you
+  bricks, rings, triangles or mosaic, drawn faintly on top of whichever background you
   picked, in an ink that follows its brightness. A **Density** slider sets how
   many marks fill the frame.
 - **Padding** — how much background shows around the shot.

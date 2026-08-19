@@ -92,6 +92,7 @@ const PATTERNS = [
   { id: "bricks", label: "Bricks" },
   { id: "rings", label: "Rings" },
   { id: "triangles", label: "Triangles" },
+  { id: "mosaic", label: "Mosaic" },
 ];
 
 // The swatch shows the very tile the canvas will draw, just darker and denser.
@@ -796,6 +797,32 @@ function patternTile(id, ink, scale) {
     ctx.beginPath();
     ctx.arc(size / 2, size / 2, unit(4), 0, Math.PI * 2);
     ctx.stroke();
+  } else if (id === "mosaic") {
+    // Pixel-mosaic: an 8×8 grid of squares where a fixed pseudo-random
+    // scatter of cells is tinted at varying strengths. The layout is
+    // deterministic so the tile meets itself seamlessly at every edge.
+    const cell = unit(14);
+    const [size] = begin(cell * 8);
+    const alpha = ctx.globalAlpha;
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        const h = (col * 73 + row * 149 + col * row * 31) % 16;
+        let strength;
+        if (h <= 1) strength = 1;
+        else if (h <= 4) strength = 0.6;
+        else if (h <= 6) strength = 0.3;
+        else continue;
+        ctx.globalAlpha = alpha * strength;
+        ctx.fillRect(col * cell, row * cell, cell, cell);
+      }
+    }
+    // Faint grid lines between cells, like tile grout.
+    ctx.globalAlpha = alpha * 0.35;
+    for (let i = 0; i < 8; i++) {
+      ctx.fillRect(i * cell, 0, 1, size);
+      ctx.fillRect(0, i * cell, size, 1);
+    }
+    ctx.globalAlpha = alpha;
   } else {
     // triangles
     const [size] = begin(unit(16));
