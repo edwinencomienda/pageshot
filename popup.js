@@ -64,6 +64,19 @@ function preparePage(pinDown) {
   const viewportWidth = root.clientWidth;
   const viewportHeight = root.clientHeight;
 
+  // Overlay scrollbars (macOS) take no room, so the crop above cannot remove
+  // them, and every scroll between shots flashes them into the picture. Since
+  // they take no room, hiding them leaves the layout alone. Classic scrollbars
+  // do take room, so they are left for the crop.
+  original.rootScrollbarWidth = root.style.scrollbarWidth;
+  if (
+    pinDown &&
+    viewportWidth === window.innerWidth &&
+    viewportHeight === window.innerHeight
+  ) {
+    root.style.setProperty("scrollbar-width", "none", "important");
+  }
+
   // A viewport capture shoots the page exactly where the user left it, so it
   // must not be scrolled around to find the reach it never uses.
   let reach = { x: 0, y: 0 };
@@ -141,6 +154,7 @@ function restorePage() {
   }
 
   document.documentElement.style.scrollBehavior = original.rootScrollBehavior;
+  document.documentElement.style.scrollbarWidth = original.rootScrollbarWidth;
   if (document.body) {
     document.body.style.scrollBehavior = original.bodyScrollBehavior;
   }

@@ -124,9 +124,10 @@ custom colors saved from there. Your normal-window presets stay untouched.
 
 `popup.js` scrolls the page one screen at a time, snaps each screen with
 `chrome.tabs.captureVisibleTab`, and stitches the pieces onto a single canvas,
-cropping scrollbars out along the way. Chrome caps capturing at two shots per
-second, so tall pages take a few seconds. The page's scroll position is
-restored when it finishes.
+cropping scrollbars out along the way. Overlay scrollbars, like macOS's, take
+no space to crop, so they are hidden while capturing instead. Chrome caps
+capturing at two shots per second, so tall pages take a few seconds. The page's
+scroll position is restored when it finishes.
 
 The editor is a second extension page (`editor.html`). The captured PNG is
 handed over through IndexedDB (`store.js`) rather than the URL, because
