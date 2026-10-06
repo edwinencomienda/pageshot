@@ -25,6 +25,8 @@ const borderColorLabel = document.querySelector("#border-color-label");
 const borderWidthInput = document.querySelector("#border-width");
 const borderWidthValue = document.querySelector("#border-width-value");
 const paddingInput = document.querySelector("#padding");
+const insetInput = document.querySelector("#inset");
+const insetValue = document.querySelector("#inset-value");
 const radiusInput = document.querySelector("#radius");
 const shadowInput = document.querySelector("#shadow");
 const paddingValue = document.querySelector("#padding-value");
@@ -122,6 +124,7 @@ const settings = {
   preset: "paper",
   color: colorInput.value,
   padding: Number(paddingInput.value),
+  inset: Number(insetInput.value),
   radius: Number(radiusInput.value),
   shadow: Number(shadowInput.value),
   crop: { ...FULL_CROP },
@@ -137,6 +140,8 @@ const settings = {
 const DEFAULTS = structuredClone(settings);
 
 let shot = null;
+// Fills the inset band; sampled once per shot, since the shot never changes.
+let edgeColor = "#ffffff";
 let filename = "screenshot.png";
 
 // Uploaded backgrounds: { id, name, blob, bitmap, url }. The url feeds the
@@ -430,6 +435,7 @@ function applyPreset(name) {
   // Presets saved before newer settings existed leave those at their default.
   settings.pattern = DEFAULTS.pattern;
   settings.patternDensity = DEFAULTS.patternDensity;
+  settings.inset = DEFAULTS.inset;
   Object.assign(settings, structuredClone(preset.look));
 
   // The image behind the preset may be long gone.
@@ -486,6 +492,8 @@ function syncControls() {
   radiusInput.value = settings.radius;
   shadowInput.value = settings.shadow;
   paddingValue.textContent = `${settings.padding}%`;
+  insetInput.value = settings.inset;
+  insetValue.textContent = settings.inset === 0 ? "Off" : `${settings.inset}px`;
   radiusValue.textContent = `${settings.radius}px`;
   shadowValue.textContent = settings.shadow === 0 ? "Off" : `${settings.shadow}%`;
   cropValue.textContent = isCropped()
@@ -913,6 +921,48 @@ function paintBackground(width, height) {
   paintPatternOverlay(width, height);
 }
 
+// The most common color along the shot's border, so the inset band blends
+// with the page's own background. The shot is shrunk to 64×64 and its border
+// pixels bucketed by rough color; the biggest bucket wins, averaged out to its
+// true color rather than the bucket's center. A plain average would turn a
+// white page with a dark sidebar into a muddy gray.
+function sampleEdgeColor(image) {
+  const side = 64;
+  const sample = document.createElement("canvas");
+  sample.width = side;
+  sample.height = side;
+  const ctx = sample.getContext("2d", { willReadFrequently: true });
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(image, 0, 0, side, side);
+  const { data } = ctx.getImageData(0, 0, side, side);
+
+  const buckets = new Map();
+  for (let y = 0; y < side; y += 1) {
+    for (let x = 0; x < side; x += 1) {
+      if (x > 0 && y > 0 && x < side - 1 && y < side - 1) continue;
+      const offset = (y * side + x) * 4;
+      if (data[offset + 3] === 0) continue;
+      const [r, g, b] = data.slice(offset, offset + 3);
+      const key = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4);
+      const bucket = buckets.get(key) ?? { r: 0, g: 0, b: 0, count: 0 };
+      bucket.r += r;
+      bucket.g += g;
+      bucket.b += b;
+      bucket.count += 1;
+      buckets.set(key, bucket);
+    }
+  }
+
+  let best = null;
+  for (const bucket of buckets.values()) {
+    if (!best || bucket.count > best.count) best = bucket;
+  }
+  if (!best) return "#ffffff";
+
+  const hex = (sum) => Math.round(sum / best.count).toString(16).padStart(2, "0");
+  return `#${hex(best.r)}${hex(best.g)}${hex(best.b)}`;
+}
+
 function render() {
   if (!shot) return;
 
@@ -928,8 +978,12 @@ function render() {
       ? Math.round(settings.borderWidth * scale)
       : 0;
 
+  // The inset band sits between the shot and the border, in the shot's own
+  // edge color, so the shot looks like it has more room of its own.
+  const band = settings.inset > 0 ? Math.round(settings.inset * scale) : 0;
+
   // Padding is a share of the shot's width so the frame looks even on any size.
-  const inset = Math.round((settings.padding / 100) * shot.width) + lineWidth;
+  const inset = Math.round((settings.padding / 100) * shot.width) + lineWidth + band;
   const width = shot.width + inset * 2;
   const height = shot.height + inset * 2;
 
@@ -938,16 +992,23 @@ function render() {
   composedContext.clearRect(0, 0, width, height);
   paintBackground(width, height);
 
-  // The shot's box, and the box the border's outer edge follows.
+  // The shot's box, the inset card around it, and the box the border's outer
+  // edge follows.
   const shotX = inset;
   const shotY = inset;
-  const outerX = shotX - lineWidth;
-  const outerY = shotY - lineWidth;
-  const outerWidth = shot.width + lineWidth * 2;
-  const outerHeight = shot.height + lineWidth * 2;
-  // Parallel to the shot's corner, one border width out.
-  const shotExtent = cornerExtent(radius);
-  const outerExtent = shotExtent + lineWidth;
+  const cardX = shotX - band;
+  const cardY = shotY - band;
+  const cardWidth = shot.width + band * 2;
+  const cardHeight = shot.height + band * 2;
+  const outerX = cardX - lineWidth;
+  const outerY = cardY - lineWidth;
+  const outerWidth = cardWidth + lineWidth * 2;
+  const outerHeight = cardHeight + lineWidth * 2;
+  // The chosen corner belongs to the card; the shot nests inside it with a
+  // corner tighter by the band, and the border runs parallel one width out.
+  const cardExtent = cornerExtent(radius);
+  const shotExtent = Math.max(0, cardExtent - band);
+  const outerExtent = cardExtent + lineWidth;
 
   if (settings.shadow > 0 && inset > 0) {
     const strength = settings.shadow / 100;
@@ -983,6 +1044,15 @@ function render() {
       outerHeight,
       outerExtent,
     );
+    composedContext.fill();
+    composedContext.restore();
+  }
+
+  if (band > 0) {
+    composedContext.save();
+    composedContext.fillStyle = edgeColor;
+    composedContext.beginPath();
+    squirclePath(composedContext, cardX, cardY, cardWidth, cardHeight, cardExtent);
     composedContext.fill();
     composedContext.restore();
   }
@@ -1145,6 +1215,7 @@ function wireSlider(input, key) {
 }
 
 wireSlider(paddingInput, "padding");
+wireSlider(insetInput, "inset");
 wireSlider(patternDensityInput, "patternDensity");
 wireSlider(radiusInput, "radius");
 wireSlider(shadowInput, "shadow");
@@ -1269,6 +1340,7 @@ async function load() {
   }
 
   shot = await createImageBitmap(record.blob);
+  edgeColor = sampleEdgeColor(shot);
   filename = record.filename || filename;
 
   // A crop belongs to the shot it was drawn on, so a new capture starts whole.
@@ -1284,6 +1356,7 @@ async function load() {
     if (preset) {
       settings.pattern = DEFAULTS.pattern;
       settings.patternDensity = DEFAULTS.patternDensity;
+      settings.inset = DEFAULTS.inset;
       Object.assign(settings, structuredClone(preset.look));
       if (settings.mode === "image" && !selectedImage()) settings.mode = "preset";
     }

@@ -18,8 +18,8 @@ and JavaScript.
 - **Straight to your clipboard** — or into the editor, whichever you prefer.
 - **A built-in editor** — put a background behind the shot: transparent, solid
   colors, gradients, or your own images, with pattern overlays on top, plus
-  padding, squircle corners (the smooth Figma/iOS kind), shadow, border, and
-  crop.
+  padding, an inset in the shot's own edge color, squircle corners (the smooth
+  Figma/iOS kind), shadow, border, and crop.
 - **Presets** — save a look you like by name and reapply it in one click; new
   captures start from it automatically.
 - **Multiple editors at once** — every capture opens in its own tab.
@@ -76,6 +76,9 @@ side:
   picked, in an ink that follows its brightness. A **Density** slider sets how
   many marks fill the frame.
 - **Padding** — how much background shows around the shot.
+- **Inset** — off by default. Adds a band around the shot, filled with the most
+  common color along its edges, so the page looks like it has extra room of
+  its own. The corners round the band, and the shot nests inside it.
 - **Corners** — rounds the screenshot's edges, using a squircle (the smooth
   Figma/iOS corner) rather than a plain arc.
 - **Shadow** — slide from off to strong.
@@ -94,7 +97,7 @@ from the **Presets** dropdown any time to apply it again.
 With a preset picked, **Save** becomes **Update** and writes your tweaks over
 it, **Save as new** keeps it and starts another, and **Delete** drops it.
 
-A preset stores the background, pattern, padding, corners, shadow and border — not the
+A preset stores the background, pattern, padding, inset, corners, shadow and border — not the
 crop, which belongs to a single screenshot. They live in the browser, so they
 stay between captures — including which one you had picked, and each new
 screenshot starts from that preset's saved look rather than your last tweaks.
