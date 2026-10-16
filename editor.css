@@ -802,7 +802,10 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
 
 /* ---------- switch ---------- */
 
+/* Positioned so the hidden checkbox stays inside it; otherwise focusing the
+   checkbox scrolls the whole page to reach it. */
 .switch {
+  position: relative;
   display: inline-flex;
   align-items: center;
   cursor: pointer;
