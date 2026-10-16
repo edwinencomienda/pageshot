@@ -40,7 +40,7 @@ Works in any Chrome-based browser: Chrome, Edge, Brave, Arc, Vivaldi, Opera.
 4. Click **Load unpacked**.
 5. Pick the folder you just downloaded.
 
-The camera icon appears in your toolbar. Pin it for easy access.
+The PageShot icon (a white crop mark on a pink tile) appears in your toolbar. Pin it for easy access.
 
 To update later: `git pull`, then click the refresh icon on the extension card.
 
@@ -68,7 +68,7 @@ side:
 
 - **Background** — a transparent option, 15 solid colors and 10 gradients built
   in. Transparent keeps the PNG's alpha, so the padding around the shot stays
-  see-through. Add your own solid colors with the picker and your own images with
+  see-through. Add your own solid colors with **Add color** and your own images with
   **Add image** — as many of each as you like. They stay in the sidebar for next time; hover one and click **×**
   to delete it.
 - **Pattern** — dots, grid, stripes, hatch, checker, crosses, waves, zigzag,
@@ -87,7 +87,10 @@ side:
   so you can save only the top, the top-left corner, and so on. **Show whole
   image** puts it back.
 
-Then hit **Copy image** or **Download** from the editor.
+Then hit **Copy image** or **Download** in the top bar. **Reset** next to them
+puts every setting back to its default (and can be undone).
+
+The editor and popup follow your system's light or dark appearance.
 
 ### Presets
 
@@ -95,7 +98,7 @@ Once a look suits you, click **Save** in the header and give it a name. Pick it
 from the **Presets** dropdown any time to apply it again.
 
 With a preset picked, **Save** becomes **Update** and writes your tweaks over
-it, **Save as new** keeps it and starts another, and **Delete** drops it.
+it, **Save as new** keeps it and starts another, and the trash icon deletes it.
 
 A preset stores the background, pattern, padding, inset, corners, shadow and border — not the
 crop, which belongs to a single screenshot. They live in the browser, so they
@@ -146,7 +149,7 @@ its own canvas.
 | `background.js` | Photographs the tab for area captures, after the popup has closed. |
 | `editor.html` / `.css` / `.js` | The background editor tab. |
 | `store.js` | Passes the captured PNG from popup to editor. |
-| `icons/` | Toolbar and store icons (16/32/48/128 px). |
+| `icons/` | Toolbar and store icons (16/32/48/128 px), drawn from `icons/icon.svg`. |
 | `manifest.json` | Extension setup and permissions. |
 
 ## Permissions, and why each is needed

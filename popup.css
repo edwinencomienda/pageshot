@@ -1,52 +1,106 @@
+/* Same neutral tokens as the editor, so the popup and editor read as one app. */
 :root {
-  color-scheme: light;
-  --ink: #17211b;
-  --paper: #f4f0e6;
-  --muted: #69736c;
-  --line: rgba(23, 33, 27, 0.16);
-  /* Pulled from the extension icon. */
-  --accent: #787878;
-  --accent-ink: #e3ded0;
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --surface: #f4f4f5;
+  --surface-hover: #ebebed;
+  --border: rgba(9, 9, 11, 0.08);
+  --border-strong: rgba(9, 9, 11, 0.14);
+  --text: #09090b;
+  --text-2: #3f3f46;
+  --muted: #71717a;
+  --primary: #09090b;
+  --primary-hover: #27272a;
+  --primary-ink: #fafafa;
+  --danger: #e5484d;
+  --success: #30a46c;
+  --warning: #f5a524;
+  --focus: rgba(99, 102, 241, 0.55);
+  --shadow-sm: 0 1px 2px rgba(9, 9, 11, 0.06);
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111113;
+    --surface: #1c1c1f;
+    --surface-hover: #26262a;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --text: #fafafa;
+    --text-2: #d4d4d8;
+    --muted: #a1a1aa;
+    --primary: #fafafa;
+    --primary-hover: #e4e4e7;
+    --primary-ink: #09090b;
+    --focus: rgba(129, 140, 248, 0.6);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
 }
 
 * {
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
-  width: 260px;
+  width: 272px;
   margin: 0;
-  color: var(--ink);
-  background: var(--paper);
-  font-family: "Avenir Next", Avenir, "Century Gothic", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+    Roboto, "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
 }
 
 main {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   padding: 14px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 15px;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
 }
 
-.brand img {
-  display: block;
-  border-radius: 5px;
+.brand-mark {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 7px;
+  /* Same Coral pink gradient as the extension icon. */
+  color: #fff;
+  background: linear-gradient(135deg, #fda4af, #f43f5e 50%, #c026d3);
+  box-shadow: 0 1px 2px rgba(192, 38, 211, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .switch {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: var(--surface);
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 700;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 140ms var(--ease);
+}
+
+.switch:hover {
+  background: var(--surface-hover);
 }
 
 .switch input {
@@ -60,36 +114,35 @@ main {
   position: relative;
   width: 32px;
   height: 18px;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  background: rgba(23, 33, 27, 0.08);
-  transition: background 160ms ease, border-color 160ms ease;
+  border-radius: 999px;
+  background: var(--border-strong);
+  transition: background 180ms var(--ease);
 }
 
 .switch-track::after {
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: var(--ink);
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(9, 9, 11, 0.3);
   content: "";
-  transition: transform 160ms ease, background 160ms ease;
+  transition: transform 180ms var(--ease);
 }
 
 .switch:has(input:checked) .switch-track {
-  border-color: var(--accent);
-  background: var(--accent);
+  background: var(--primary);
 }
 
 .switch:has(input:checked) .switch-track::after {
-  background: var(--accent-ink);
+  background: var(--primary-ink);
   transform: translateX(14px);
 }
 
 .switch:has(input:focus-visible) .switch-track {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -100,47 +153,54 @@ main {
 
 button {
   width: 100%;
-  min-height: 38px;
+  height: 36px;
   padding: 0 12px;
   border: 0;
-  border-radius: 2px;
-  color: #fff;
-  background: var(--ink);
+  border-radius: 8px;
+  color: var(--primary-ink);
+  background: var(--primary);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   cursor: pointer;
   font: inherit;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
+  transition: background 140ms var(--ease), transform 140ms var(--ease);
 }
 
 button:hover:not(:disabled) {
-  opacity: 0.88;
+  background: var(--primary-hover);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 button:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
 button:disabled {
   cursor: wait;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .secondary-button {
-  border: 1px solid var(--line);
-  color: var(--ink);
-  background: transparent;
+  color: var(--text);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--border-strong), var(--shadow-sm);
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: var(--surface);
 }
 
 .status-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   color: var(--muted);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 12px;
 }
 
 /* Hidden until there is something to report. */
@@ -151,17 +211,21 @@ button:disabled {
 .status-dot {
   width: 6px;
   height: 6px;
+  flex: none;
   border-radius: 50%;
-  background: #75a300;
+  background: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
 }
 
 .status-dot.busy {
-  background: #d58b00;
+  background: var(--warning);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning) 18%, transparent);
   animation: pulse 900ms ease-in-out infinite alternate;
 }
 
 .status-dot.error {
-  background: #c83d2f;
+  background: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 18%, transparent);
 }
 
 @keyframes pulse {
@@ -171,10 +235,10 @@ button:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .status-dot.busy,
-  .switch-track,
-  .switch-track::after {
-    transition: none;
-    animation: none;
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }

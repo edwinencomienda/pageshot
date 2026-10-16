@@ -3,55 +3,86 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PageShot — dress up screenshot</title>
+    <meta name="color-scheme" content="light dark" />
+    <title>PageShot — Editor</title>
     <link rel="stylesheet" href="editor.css" />
   </head>
   <body>
-    <header>
-      <img class="brand-mark" src="icons/icon48.png" alt="" width="24" height="24" />
-      <h1>PageShot</h1>
-      <div class="history">
-        <button id="undo" type="button" aria-label="Undo">↺</button>
-        <button id="redo" type="button" aria-label="Redo">↻</button>
+    <!-- Icon sprite: each <use href="#i-…"> below draws from here. -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></symbol>
+        <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5" /><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13" /></symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></symbol>
+        <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" /><path d="M12 15V3" /></symbol>
+        <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></symbol>
+        <symbol id="i-pipette" viewBox="0 0 24 24"><path d="m2 22 1-1h3l9-9" /><path d="M3 21v-3l9-9" /><path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l.4.4a2.1 2.1 0 1 1-3 3l-3.8-3.8a2.1 2.1 0 1 1 3-3l.4.4Z" /></symbol>
+        <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" /></symbol>
+        <symbol id="i-crop" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14" /><path d="M18 22V8a2 2 0 0 0-2-2H2" /></symbol>
+        <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" /></symbol>
+      </defs>
+    </svg>
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 4.75V14a1.5 1.5 0 0 0 1.5 1.5h9.25" /><path d="M4.75 8.5H14a1.5 1.5 0 0 1 1.5 1.5v9.25" /></svg>
+        </span>
+        <h1>PageShot</h1>
       </div>
+
+      <span class="divider" aria-hidden="true"></span>
+
+      <div class="history">
+        <button id="undo" class="icon-button" type="button" aria-label="Undo">
+          <svg class="icon"><use href="#i-undo" /></svg>
+        </button>
+        <button id="redo" class="icon-button" type="button" aria-label="Redo">
+          <svg class="icon"><use href="#i-redo" /></svg>
+        </button>
+      </div>
+
+      <span class="divider" aria-hidden="true"></span>
+
       <div class="presets">
         <select id="preset-picker" aria-label="Saved presets">
           <option value="">Presets</option>
         </select>
-        <button id="preset-save" class="ghost-button" type="button" title="Save the current look as a preset">
+        <button id="preset-save" class="button button-ghost" type="button" title="Save the current look as a preset">
           Save
         </button>
-        <button id="preset-save-as" class="ghost-button" type="button" title="Save the current look as a new preset" hidden>
+        <button id="preset-save-as" class="button button-ghost" type="button" title="Save the current look as a new preset" hidden>
           Save as new
         </button>
-        <button id="preset-delete" class="ghost-button" type="button" title="Delete the selected preset" disabled>
-          Delete
+        <button
+          id="preset-delete"
+          class="icon-button"
+          type="button"
+          title="Delete the selected preset"
+          aria-label="Delete the selected preset"
+          disabled
+        >
+          <svg class="icon"><use href="#i-trash" /></svg>
         </button>
       </div>
 
-      <span id="dimensions" class="dimensions"></span>
-      <a
-        class="repo-link"
-        href="https://github.com/edwinencomienda/pageshot"
-        target="_blank"
-        rel="noreferrer"
-        aria-label="PageShot on GitHub"
-        title="PageShot on GitHub"
-      >
-        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-          <path
-            fill="currentColor"
-            d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38l-.01-1.34c-2.23.48-2.7-1.07-2.7-1.07-.36-.93-.89-1.18-.89-1.18-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.67.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.83-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.22 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.52.56.83 1.28.83 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.14.46.55.38A8 8 0 0 0 8 0Z"
-          />
-        </svg>
-      </a>
-      <a
-        class="credit"
-        href="https://x.com/edwinencomienda"
-        target="_blank"
-        rel="noreferrer"
-        >Crafted by Edwin Encomienda</a
-      >
+      <div class="topbar-actions">
+        <button id="reset" class="button button-ghost" type="button" title="Reset every setting to its default">
+          <svg class="icon"><use href="#i-reset" /></svg>
+          <span>Reset</span>
+        </button>
+        <button id="download" class="button button-secondary" type="button">
+          <svg class="icon"><use href="#i-download" /></svg>
+          <span>Download</span>
+          <kbd data-key="D"></kbd>
+        </button>
+        <button id="copy" class="button button-primary" type="button">
+          <svg class="icon"><use href="#i-copy" /></svg>
+          <span>Copy image</span>
+          <kbd data-key="C"></kbd>
+        </button>
+      </div>
     </header>
 
     <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
@@ -59,118 +90,150 @@
     <main>
       <section class="stage">
         <div id="empty" class="empty" hidden>
-          <p>No screenshot waiting.</p>
+          <span class="empty-mark" aria-hidden="true">
+            <svg class="icon"><use href="#i-image" /></svg>
+          </span>
+          <p class="empty-title">No screenshot waiting</p>
           <p class="empty-hint">
-            Click the extension icon, pick <strong>Open in editor</strong>, then
-            capture.
+            Click the extension icon, switch on <strong>Open in editor</strong>,
+            then capture.
           </p>
         </div>
         <div id="frame" class="frame">
           <canvas id="canvas"></canvas>
           <div id="marquee" class="marquee" hidden></div>
         </div>
+
+        <div class="stage-hud" aria-hidden="true">
+          <span id="dimensions" class="dimensions"></span>
+          <span class="hud-sep"></span>
+          <span class="hud-hint">
+            <svg class="icon"><use href="#i-crop" /></svg>
+            Drag to crop
+          </span>
+        </div>
       </section>
 
       <aside class="panel">
-        <div class="actions actions-top">
-          <button id="copy" type="button">
-            Copy image <kbd data-key="C"></kbd>
-          </button>
-          <button id="download" class="secondary-button" type="button">
-            Download <kbd data-key="D"></kbd>
-          </button>
-          <button id="reset" class="secondary-button" type="button">
-            Reset to defaults
-          </button>
+        <div class="panel-scroll">
+          <fieldset class="section">
+            <legend>Background</legend>
+
+            <p class="sub">Solid</p>
+            <div id="solids" class="swatches" role="radiogroup" aria-label="Solid backgrounds"></div>
+
+            <p class="sub">Gradient</p>
+            <div id="gradients" class="swatches" role="radiogroup" aria-label="Gradient backgrounds"></div>
+
+            <p class="sub" id="colors-sub" hidden>My colors</p>
+            <div id="colors" class="swatches" role="radiogroup" aria-label="My colors"></div>
+
+            <p class="sub" id="images-sub" hidden>My images</p>
+            <div id="images" class="swatches" role="radiogroup" aria-label="My images"></div>
+
+            <div class="add-row">
+              <label class="add-button">
+                <input id="color" type="color" value="#1d3b2a" />
+                <svg class="icon"><use href="#i-pipette" /></svg>
+                <span>Add color</span>
+              </label>
+              <label class="add-button">
+                <input id="upload" type="file" accept="image/*" multiple />
+                <svg class="icon"><use href="#i-image" /></svg>
+                <span>Add image</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="section">
+            <legend>Pattern</legend>
+            <div id="patterns" class="swatches" role="radiogroup" aria-label="Pattern backgrounds"></div>
+            <label class="slider-row" id="pattern-density-row">
+              <span class="slider-label">Density <output id="pattern-density-value"></output></span>
+              <input id="pattern-density" type="range" min="50" max="300" step="10" value="100" />
+            </label>
+          </fieldset>
+
+          <fieldset class="section">
+            <legend>Frame</legend>
+            <label class="slider-row">
+              <span class="slider-label">Padding <output id="padding-value"></output></span>
+              <input id="padding" type="range" min="0" max="14" step="0.5" value="5" />
+            </label>
+            <label class="slider-row">
+              <span class="slider-label">
+                <span>Inset <span class="info" title="A band in the screenshot's own edge color.">?</span></span>
+                <output id="inset-value"></output>
+              </span>
+              <input id="inset" type="range" min="0" max="60" step="1" value="0" />
+            </label>
+            <label class="slider-row">
+              <span class="slider-label">Corners <output id="radius-value"></output></span>
+              <input id="radius" type="range" min="0" max="48" step="1" value="10" />
+            </label>
+            <label class="slider-row">
+              <span class="slider-label">Shadow <output id="shadow-value"></output></span>
+              <input id="shadow" type="range" min="0" max="100" step="5" value="10" />
+            </label>
+          </fieldset>
+
+          <fieldset class="section section-border">
+            <legend>
+              Border
+              <label class="switch">
+                <input id="border" type="checkbox" role="switch" aria-label="Show border" />
+                <span class="switch-track" aria-hidden="true"></span>
+              </label>
+            </legend>
+            <div class="border-controls">
+              <label class="color-field">
+                <input id="border-color" type="color" value="#17211b" />
+                <span id="border-color-label">Color</span>
+              </label>
+              <label class="slider-row">
+                <span class="slider-label">Thickness <output id="border-width-value"></output></span>
+                <input id="border-width" type="range" min="1" max="24" step="1" value="4" />
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="section">
+            <legend>Crop <output id="crop-value"></output></legend>
+            <p class="hint">Drag on the image to keep just that part.</p>
+            <button id="crop-reset" class="button button-secondary button-block" type="button" disabled>
+              <svg class="icon"><use href="#i-expand" /></svg>
+              <span>Show whole image</span>
+            </button>
+          </fieldset>
         </div>
 
-        <fieldset>
-          <legend>Background</legend>
-          <p class="sub">Solid</p>
-          <div id="solids" class="swatches" role="radiogroup" aria-label="Solid backgrounds"></div>
-          <p class="sub">Gradient</p>
-          <div id="gradients" class="swatches" role="radiogroup" aria-label="Gradient backgrounds"></div>
-          <p class="sub">Pattern</p>
-          <div id="patterns" class="swatches" role="radiogroup" aria-label="Pattern backgrounds"></div>
-          <label class="slider-row" id="pattern-density-row">
-            <span>Density <output id="pattern-density-value"></output></span>
-            <input
-              id="pattern-density"
-              type="range"
-              min="50"
-              max="300"
-              step="10"
-              value="100"
-            />
-          </label>
-
-          <p class="sub" id="colors-sub" hidden>My colors</p>
-          <div id="colors" class="swatches" role="radiogroup" aria-label="My colors"></div>
-
-          <label class="custom-color">
-            <input id="color" type="color" value="#1d3b2a" />
-            <span>Add solid color</span>
-          </label>
-
-          <p class="sub" id="images-sub" hidden>My images</p>
-          <div id="images" class="swatches" role="radiogroup" aria-label="My images"></div>
-
-          <label class="upload">
-            <input id="upload" type="file" accept="image/*" multiple />
-            <span>Add image</span>
-          </label>
-        </fieldset>
-
-        <fieldset>
-          <legend>Padding <output id="padding-value"></output></legend>
-          <input id="padding" type="range" min="0" max="14" step="0.5" value="5" />
-        </fieldset>
-
-        <fieldset>
-          <legend>Inset <output id="inset-value"></output></legend>
-          <input id="inset" type="range" min="0" max="60" step="1" value="0" />
-          <p class="hint">A band in the screenshot's own edge color.</p>
-        </fieldset>
-
-        <fieldset>
-          <legend>Corners <output id="radius-value"></output></legend>
-          <input id="radius" type="range" min="0" max="48" step="1" value="10" />
-        </fieldset>
-
-        <fieldset>
-          <legend>Shadow <output id="shadow-value"></output></legend>
-          <input id="shadow" type="range" min="0" max="100" step="5" value="10" />
-        </fieldset>
-
-        <fieldset>
-          <legend>
-            Border
-            <label class="switch">
-              <input id="border" type="checkbox" role="switch" />
-              <span class="switch-track" aria-hidden="true"></span>
-            </label>
-          </legend>
-          <div class="custom-row">
-            <label class="custom-color">
-              <input id="border-color" type="color" value="#17211b" />
-              <span id="border-color-label">Color</span>
-            </label>
+        <footer class="panel-footer">
+          <p id="status" class="status" aria-live="polite">Ready</p>
+          <div class="footer-links">
+            <a
+              class="credit"
+              href="https://x.com/edwinencomienda"
+              target="_blank"
+              rel="noreferrer"
+              >by Edwin Encomienda</a
+            >
+            <a
+              class="repo-link"
+              href="https://github.com/edwinencomienda/pageshot"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="PageShot on GitHub"
+              title="PageShot on GitHub"
+            >
+              <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38l-.01-1.34c-2.23.48-2.7-1.07-2.7-1.07-.36-.93-.89-1.18-.89-1.18-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.67.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.83-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.22 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.52.56.83 1.28.83 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.14.46.55.38A8 8 0 0 0 8 0Z"
+                />
+              </svg>
+            </a>
           </div>
-          <label class="slider-row">
-            <span>Thickness <output id="border-width-value"></output></span>
-            <input id="border-width" type="range" min="1" max="24" step="1" value="4" />
-          </label>
-        </fieldset>
-
-        <fieldset>
-          <legend>Crop <output id="crop-value"></output></legend>
-          <p class="hint">Drag on the image to keep just that part.</p>
-          <button id="crop-reset" class="secondary-button" type="button" disabled>
-            Show whole image
-          </button>
-        </fieldset>
-
-        <p id="status" class="status" aria-live="polite">Ready</p>
+        </footer>
       </aside>
     </main>
 

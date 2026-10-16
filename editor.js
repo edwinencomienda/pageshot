@@ -100,10 +100,10 @@ const PATTERNS = [
 // The swatch shows the very tile the canvas will draw, just darker and denser.
 function patternCss(id) {
   if (id === "none")
-    return "linear-gradient(135deg, transparent 45%, rgba(200, 61, 47, 0.7) 45% 55%, transparent 55%), #f4f0e6";
+    return "linear-gradient(135deg, transparent 46%, rgba(229, 72, 77, 0.75) 46% 54%, transparent 54%), #f4f4f5";
 
-  const tile = patternTile(id, "rgba(23, 33, 27, 0.3)", 0.8);
-  return `url(${tile.toDataURL()}) 0 0 / ${tile.width}px ${tile.height}px repeat, #f4f0e6`;
+  const tile = patternTile(id, "rgba(9, 9, 11, 0.32)", 0.7);
+  return `url(${tile.toDataURL()}) 0 0 / ${tile.width}px ${tile.height}px repeat, #f4f4f5`;
 }
 
 // `css` mirrors the canvas fill so each swatch previews what it draws.
